@@ -1,0 +1,8 @@
+# Authentication & Authorization
+backend/smart-campus-api/src/main/resources/application.properties
+
+# Build artifacts
+target/
+backend/smart-campus-api/target/
+frontend/smart-campus-ui/dist/
+frontend/smart-campus-ui/node_modules/
