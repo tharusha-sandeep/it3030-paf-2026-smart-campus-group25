@@ -8,13 +8,14 @@ spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.h2.console.enabled=true
 
-spring.security.oauth2.client.registration.google.client-id=
-spring.security.oauth2.client.registration.google.client-secret=
+spring.security.oauth2.client.registration.google.client-id=dummy
+spring.security.oauth2.client.registration.google.client-secret=dummy
 spring.security.oauth2.client.registration.google.scope=email,profile
 
-jwt.secret=
+jwt.secret=smartcampus-super-secret-key-2026-local-dev
 jwt.expiration-ms=86400000
 
 frontend.url=http://localhost:5173
+
 spring.servlet.multipart.max-file-size=5MB
 spring.servlet.multipart.max-request-size=20MB
