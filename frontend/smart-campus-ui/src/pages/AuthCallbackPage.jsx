@@ -1,100 +1,84 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
-import { Loader2 } from "lucide-react";
-import axiosInstance from "../api/axiosInstance";
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 
-const AuthCallbackPage = () => {
+/**
+ * Handles the Google OAuth2 callback.
+ * Extracted token is saved directly to localStorage and role is decoded 
+ * to determine the immediate redirect path without extra API calls.
+ */
+export default function AuthCallbackPage() {
   const [searchParams] = useSearchParams();
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const [error, setError] = useState(false);
 
   useEffect(() => {
-    let timeoutId;
-    const authenticate = async () => {
-      const token = searchParams.get("token");
-      if (!token) {
-        navigate("/login");
-        return;
+    const token = searchParams.get("token");
+
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
+    // Store token immediately (matching 'sc_token' in AuthContext)
+    localStorage.setItem("sc_token", token);
+
+    // Decode JWT payload to get role WITHOUT calling /api/auth/me
+    try {
+      const base64Payload = token.split(".")[1];
+      const padding = "=".repeat((4 - (base64Payload.length % 4)) % 4);
+      const decoded = JSON.parse(atob(base64Payload + padding));
+
+      // Try various role claim names
+      const role = decoded.role || decoded.roles || decoded.authorities || "USER";
+
+      // Store simplified user role
+      const normalizedRole =
+        (Array.isArray(role) && role.some((r) => r.includes("ADMIN"))) ||
+        (typeof role === "string" && (role === "ADMIN" || role === "ROLE_ADMIN"))
+          ? "ADMIN"
+          : "USER";
+
+      localStorage.setItem("userRole", normalizedRole);
+
+      // Redirect based on role
+      if (normalizedRole === "ADMIN") {
+        window.location.href = "/admin/dashboard";
+      } else {
+        window.location.href = "/dashboard";
       }
-
-      // Setup 5 second timeout to show error
-      timeoutId = setTimeout(() => {
-        setError(true);
-      }, 5000);
-
-      try {
-        // Optimistically set the token for axios calls
-        login(token);
-        
-        // Verify with the backend 
-        const response = await axiosInstance.get("/api/auth/me");
-        
-        // If successful, clear the timeout
-        clearTimeout(timeoutId);
-
-        // Redirect based on the actual verified user role
-        const role = response.data.role;
-        window.location.href = role === "ADMIN" ? "/admin/dashboard" : "/dashboard";
-      } catch {
-        clearTimeout(timeoutId);
-        setError(true);
-      }
-    };
-
-    authenticate();
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [searchParams, login, navigate]);
-
-  if (error) {
-    return (
-      <div style={{ 
-        height: "100vh", 
-        display: "flex", 
-        flexDirection: "column",
-        alignItems: "center", 
-        justifyContent: "center",
-        backgroundColor: "#f3f4f6" 
-      }}>
-        <div style={{ textAlign: "center", backgroundColor: "white", padding: "2rem", borderRadius: "12px", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
-          <p style={{ color: "#b91c1c", marginBottom: "1.5rem", fontSize: "1.1rem", fontWeight: "500" }}>Authentication failed. Please try again.</p>
-          <button 
-            onClick={() => window.location.href = "/login"}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#1a3a6b",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: "600"
-            }}
-          >
-            Back to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
+    } catch (error) {
+      console.error("Token decoding failed", error);
+      // Fallback redirect
+      window.location.href = "/dashboard";
+    }
+  }, [searchParams]);
 
   return (
-    <div style={{ 
-      height: "100vh", 
-      display: "flex", 
-      alignItems: "center", 
-      justifyContent: "center",
-      backgroundColor: "#f3f4f6" 
-    }}>
-      <div style={{ textAlign: "center" }}>
-        <Loader2 className="animate-spin" size={48} color="#15803d" />
-        <p style={{ marginTop: "1rem", color: "#6b7280" }}>Finalizing authentication...</p>
-      </div>
+    <div
+      style={{
+        width: "100vw",
+        height: "100vh",
+        background:
+          "linear-gradient(135deg, #1a3a6b 0%, #0f2447 50%, #1a3a6b 100%)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "white",
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
+      <div
+        style={{
+          width: "48px",
+          height: "48px",
+          border: "4px solid rgba(255,255,255,0.3)",
+          borderTop: "4px solid white",
+          borderRadius: "50%",
+          animation: "spin 1s linear infinite",
+          marginBottom: "16px",
+        }}
+      />
+      <p style={{ fontSize: "16px", opacity: 0.8 }}>Signing you in...</p>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
-};
-
-export default AuthCallbackPage;
+}

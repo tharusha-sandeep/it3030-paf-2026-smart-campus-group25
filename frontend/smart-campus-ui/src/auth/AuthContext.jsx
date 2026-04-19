@@ -15,12 +15,22 @@ const authReducer = (state, action) => {
       const token = action.payload;
       try {
         const decoded = jwtDecode(token);
+        
+        // Handle various common JWT claim names for roles
+        const rawRole = decoded.role || decoded.roles || decoded.authorities;
+        const normalizedRole =
+          (Array.isArray(rawRole) && rawRole.some((r) => r.includes("ADMIN"))) ||
+          (typeof rawRole === "string" && (rawRole === "ADMIN" || rawRole === "ROLE_ADMIN"))
+            ? "ADMIN"
+            : "USER";
+
         const user = {
           id: decoded.sub,
-          name: decoded.name,
+          name: decoded.name || decoded.full_name || decoded.email?.split("@")[0],
           email: decoded.email,
-          role: decoded.role,
+          role: normalizedRole,
         };
+        
         localStorage.setItem("sc_token", token);
         return {
           ...state,
@@ -30,6 +40,7 @@ const authReducer = (state, action) => {
         };
       } catch (error) {
         console.error("Invalid token", error);
+        localStorage.removeItem("sc_token");
         return initialState;
       }
     }
