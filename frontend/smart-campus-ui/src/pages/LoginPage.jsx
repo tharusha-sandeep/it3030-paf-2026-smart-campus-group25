@@ -97,6 +97,7 @@ const s = {
     color: "#64748b",
     marginTop: "0.3rem",
     letterSpacing: "0.01em",
+    display: "none", // Explicitly hide per request
   },
   googleBtn: {
     width: "100%",
@@ -151,11 +152,13 @@ const s = {
     width: "100%",
     padding: "11px 40px",
     borderRadius: "9px",
-    border: "1.5px solid #e2e8f0",
+    border: "1.5px solid rgba(255,255,255,0.2)",
     fontSize: "0.9375rem",
     outline: "none",
     boxSizing: "border-box",
-    color: "#1e293b",
+    color: "#ffffff",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    transition: "border-color 0.2s, box-shadow 0.2s",
   },
   passwordToggle: {
     position: "absolute",
@@ -301,6 +304,21 @@ const LoginPage = () => {
 
   return (
     <div style={s.page}>
+      <style>
+        {`
+          input::placeholder {
+            color: rgba(255, 255, 255, 0.5) !important;
+          }
+          input:-webkit-autofill,
+          input:-webkit-autofill:hover, 
+          input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0px 1000px #3a4a6b inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
+            caret-color: #ffffff;
+          }
+        `}
+      </style>
       <div style={s.bgCircle1} />
       <div style={s.bgCircle2} />
 
@@ -311,7 +329,6 @@ const LoginPage = () => {
             <GraduationCap size={28} color="white" />
           </div>
           <h1 style={s.title}>Smart Campus Hub</h1>
-          <p style={s.subtitle}>University Operations Platform</p>
         </div>
 
         {/* Error Message */}
@@ -339,6 +356,7 @@ const LoginPage = () => {
                 <Mail style={s.inputIcon} />
                 <input
                   type="email"
+                  autoComplete="off"
                   placeholder="you@university.edu"
                   style={s.input}
                   value={email}
@@ -358,6 +376,7 @@ const LoginPage = () => {
                 <Lock style={s.inputIcon} />
                 <input
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   placeholder="Enter your password"
                   style={s.input}
                   value={password}
@@ -383,7 +402,7 @@ const LoginPage = () => {
             </div>
 
             <button type="submit" style={s.submitBtn} disabled={loading}>
-              {loading ? <Loader2 className="animate-spin" size={18} /> : "Sign in to Dashboard"}
+              {loading ? <Loader2 className="animate-spin" size={18} /> : "Sign in"}
             </button>
 
             <div style={s.signupLink}>
@@ -402,6 +421,7 @@ const LoginPage = () => {
                 <UserIcon style={s.inputIcon} />
                 <input
                   type="text"
+                  autoComplete="name"
                   placeholder="Your full name"
                   style={s.input}
                   value={fullName}
@@ -416,6 +436,7 @@ const LoginPage = () => {
                 <Mail style={s.inputIcon} />
                 <input
                   type="email"
+                  autoComplete="off"
                   placeholder="you@university.edu"
                   style={s.input}
                   value={email}
@@ -430,6 +451,7 @@ const LoginPage = () => {
                 <Lock style={s.inputIcon} />
                 <input
                   type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   placeholder="Create a password"
                   style={s.input}
                   value={password}
@@ -447,6 +469,7 @@ const LoginPage = () => {
                 <Lock style={s.inputIcon} />
                 <input
                   type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   placeholder="Repeat password"
                   style={s.input}
                   value={confirmPassword}
