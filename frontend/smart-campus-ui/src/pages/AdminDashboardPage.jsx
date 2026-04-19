@@ -144,6 +144,7 @@ const AdminDashboardPage = () => {
     setActiveNav(id);
     if (id === "dashboard") navigate("/admin/dashboard");
     else if (id === "resources") navigate("/resources");
+    else if (id === "users") navigate("/users");
     // Add other navigations here as needed
   };
 

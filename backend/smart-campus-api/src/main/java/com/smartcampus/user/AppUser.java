@@ -52,6 +52,9 @@ public class AppUser {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private boolean enabled = true;
+
     @PrePersist
     protected void onCreate() {
         if (role == null) {

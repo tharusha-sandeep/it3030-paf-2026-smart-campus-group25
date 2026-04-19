@@ -15,6 +15,7 @@ import UnauthorizedPage from "./pages/UnauthorizedPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ResourcesPage from "./pages/ResourcesPage";
+import UsersPage from "./pages/UsersPage";
 
 /**
  * Redirects authenticated users to their role-specific dashboard,
@@ -50,6 +51,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminDashboardPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <AdminRoute>
+              <UsersPage />
             </AdminRoute>
           }
         />
