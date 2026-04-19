@@ -263,10 +263,7 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    // First sign out of Google silently, then redirect
-    // This forces account picker to always appear
-    window.location.href =
-      "http://localhost:8080/oauth2/authorization/google?prompt=select_account&max_age=0";
+    window.location.href = "http://localhost:8080/oauth2/authorization/google";
   };
 
   return (

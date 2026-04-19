@@ -4,6 +4,7 @@ import com.smartcampus.user.AppRole;
 import com.smartcampus.user.AppUser;
 import com.smartcampus.user.AuthProvider;
 import com.smartcampus.user.UserRepository;
+
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -30,15 +32,18 @@ public class SecurityConfig {
     private final JwtUtils jwtUtils;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final ClientRegistrationRepository clientRegistrationRepository;
 
     public SecurityConfig(UserRepository userRepository,
                           JwtUtils jwtUtils,
                           JwtAuthenticationFilter jwtAuthenticationFilter,
-                          BCryptPasswordEncoder passwordEncoder) {
+                          BCryptPasswordEncoder passwordEncoder,
+                          ClientRegistrationRepository clientRegistrationRepository) {
         this.userRepository = userRepository;
         this.jwtUtils = jwtUtils;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.passwordEncoder = passwordEncoder;
+        this.clientRegistrationRepository = clientRegistrationRepository;
     }
 
     @Bean
@@ -52,6 +57,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(auth -> auth
+                                .authorizationRequestResolver(new CustomAuthorizationRequestResolver(clientRegistrationRepository))
+                        )
                         .successHandler(new SimpleUrlAuthenticationSuccessHandler() {
                             @Override
                             public void onAuthenticationSuccess(jakarta.servlet.http.HttpServletRequest request,
