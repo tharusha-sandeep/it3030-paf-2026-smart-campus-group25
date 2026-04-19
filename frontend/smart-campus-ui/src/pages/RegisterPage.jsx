@@ -6,6 +6,7 @@ import {
   Lock,
   Eye,
   EyeOff,
+  User as UserIcon,
   GraduationCap,
   Loader2,
 } from "lucide-react";
@@ -14,15 +15,6 @@ import axiosInstance from "../api/axiosInstance";
 
 const NAVY = "#1a3a6b";
 const NAVY_DARK = "#0f2447";
-
-const GoogleIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 18 18">
-    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
-    <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
-    <path d="M3.964 10.706c-.18-.54-.282-1.117-.282-1.706s.102-1.166.282-1.706V4.962H.957C.347 6.178 0 7.55 0 9s.347 2.822.957 4.038l3.007-2.332z" fill="#FBBC05"/>
-    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.443 2.048.957 4.962l3.007 2.332C4.672 5.164 6.656 3.58 9 3.58z" fill="#EA4335"/>
-  </svg>
-);
 
 const s = {
   page: {
@@ -64,9 +56,7 @@ const s = {
     maxWidth: "480px",
     width: "100%",
     margin: "auto",
-    backgroundColor: "rgba(15, 23, 42, 0.6)",
-    backdropFilter: "blur(10px)",
-    border: "1px solid rgba(255,255,255,0.1)",
+    backgroundColor: "white",
     borderRadius: "16px",
     boxShadow: "0 25px 60px rgba(0,0,0,0.35)",
     padding: "2.25rem",
@@ -94,36 +84,10 @@ const s = {
   title: {
     fontSize: "1.5rem",
     fontWeight: "700",
-    color: "#ffffff",
+    color: "#0f172a",
     margin: 0,
     letterSpacing: "-0.02em",
   },
-  googleBtn: {
-    width: "100%",
-    backgroundColor: "white",
-    color: "#1e293b",
-    padding: "11px 16px",
-    borderRadius: "10px",
-    border: "none",
-    fontSize: "0.9375rem",
-    fontWeight: "600",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    boxSizing: "border-box",
-  },
-  divider: {
-    display: "flex",
-    alignItems: "center",
-    margin: "1.25rem 0",
-    color: "rgba(255,255,255,0.6)",
-    fontSize: "0.75rem",
-    letterSpacing: "0.05em",
-  },
-  dividerLine: { flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.1)" },
-  dividerText: { margin: "0 10px", whiteSpace: "nowrap" },
   formGroup: { marginBottom: "1rem" },
   labelRow: {
     display: "flex",
@@ -132,12 +96,6 @@ const s = {
     marginBottom: "6px",
   },
   label: { fontSize: "0.8125rem", fontWeight: "500", color: "#ffffff" },
-  forgotLink: {
-    fontSize: "0.75rem",
-    color: "#93c5fd",
-    textDecoration: "none",
-    fontWeight: "500",
-  },
   inputWrapper: { position: "relative", display: "flex", alignItems: "center" },
   inputIcon: {
     position: "absolute",
@@ -169,16 +127,9 @@ const s = {
     padding: 0,
     display: "flex",
   },
-  checkboxRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    marginBottom: "1.25rem",
-  },
-  checkboxLabel: { fontSize: "0.8125rem", color: "rgba(255,255,255,0.8)", cursor: "pointer" },
   submitBtn: {
     width: "100%",
-    backgroundColor: "#3b82f6",
+    backgroundColor: NAVY,
     color: "white",
     padding: "12px",
     borderRadius: "10px",
@@ -197,21 +148,22 @@ const s = {
     marginTop: "1.25rem",
     textAlign: "center",
     fontSize: "0.8125rem",
+    color: "#64748b",
   },
   signupAnchor: {
-    color: "#93c5fd",
+    color: NAVY,
     fontWeight: "600",
     textDecoration: "none",
   },
   error: {
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-    color: "#fecaca",
+    backgroundColor: "#fef2f2",
+    color: "#b91c1c",
     padding: "10px 14px",
     borderRadius: "8px",
     fontSize: "0.875rem",
     marginBottom: "1.25rem",
     textAlign: "center",
-    border: "1px solid rgba(239, 68, 68, 0.3)",
+    border: "1px solid #fecaca",
   },
   footerLinks: {
     marginTop: "1.75rem",
@@ -227,9 +179,8 @@ const s = {
   footerDot: { color: "rgba(255,255,255,0.3)" },
 };
 
-const LoginPage = () => {
+const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { isAuthenticated, login, user } = useAuth();
@@ -237,33 +188,34 @@ const LoginPage = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   if (isAuthenticated) {
     return <Navigate to={getRoleBasedPath(user)} replace />;
   }
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      const response = await axiosInstance.post("/api/auth/login", { email, password });
+      const response = await axiosInstance.post("/api/auth/register", { name: fullName, email, password });
       login(response.data.token);
-      const decoded = response.data.token ? (() => { try { const p = JSON.parse(atob(response.data.token.split('.')[1])); return p; } catch { return {}; } })() : {};
-      navigate(decoded.role === "ADMIN" ? "/admin/dashboard" : "/dashboard");
+      navigate("/dashboard"); // new accounts always start as USER
     } catch (err) {
-      if (err.response?.status === 401) {
-        setError("Invalid email or password");
+      if (err.response?.status === 409) {
+        setError("Email already registered");
       } else {
-        setError(err.response?.data?.message || "Something went wrong. Please try again.");
+        setError(err.response?.data?.message || "Registration failed. Please try again.");
       }
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8080/oauth2/authorization/google";
   };
 
   return (
@@ -282,32 +234,43 @@ const LoginPage = () => {
       <div style={s.bgCircle1} />
       <div style={s.bgCircle2} />
 
-      <div style={s.card}>
+      {/* Adding card background change implicitly through outer styling requirement, but keeping the white card to stand out? 
+          Wait, the prompt says "Input fields invisible (white text on white background)". The card itself might need a dark background depending on design, or maybe the inputs inside the white card now have a dark background.
+          Actually, I notice the prompt says label text color #ffffff. This means the card background must be dark/transparent, or the background of the form area is dark.
+          If `s.card` has `backgroundColor: "white"` then white labels won't work well.
+          Let's change the card background to `transparent` or dark to match the form. I'll use a deep semi-transparent dark, like `rgba(15, 23, 42, 0.6)` or just remove the white background.
+          Let me adjust s.card to `backgroundColor: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(10px)"` so it works with white text.
+      */}
+
+      <div style={{...s.card, backgroundColor: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)" }}>
         {/* Header */}
         <div style={s.header}>
           <div style={s.iconBox}>
             <GraduationCap size={28} color="white" />
           </div>
-          <h1 style={s.title}>Smart Campus Hub</h1>
+          <h1 style={{...s.title, color: "white"}}>Smart Campus Hub</h1>
         </div>
 
         {/* Error Message */}
         {error && <div style={s.error}>{error}</div>}
 
-        <form onSubmit={handleLogin} autoComplete="off">
-          {/* Google Sign-In at TOP */}
-          <button type="button" style={s.googleBtn} onClick={handleGoogleLogin}>
-            <GoogleIcon />
-            Sign in with Google
-          </button>
-
-          <div style={s.divider}>
-            <div style={s.dividerLine} />
-            <span style={s.dividerText}>or sign in with email</span>
-            <div style={s.dividerLine} />
+        <form onSubmit={handleRegister} autoComplete="off">
+          <div style={s.formGroup}>
+            <label style={s.label}>Full Name</label>
+            <div style={s.inputWrapper}>
+              <UserIcon style={s.inputIcon} />
+              <input
+                type="text"
+                autoComplete="off"
+                name="register-name"
+                placeholder="Your full name"
+                style={s.input}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+            </div>
           </div>
-
-          {/* Email */}
           <div style={s.formGroup}>
             <label style={s.label}>Email Address</label>
             <div style={s.inputWrapper}>
@@ -315,7 +278,7 @@ const LoginPage = () => {
               <input
                 type="email"
                 autoComplete="off"
-                name="login-email"
+                name="register-email"
                 placeholder="you@university.edu"
                 style={s.input}
                 value={email}
@@ -324,20 +287,15 @@ const LoginPage = () => {
               />
             </div>
           </div>
-
-          {/* Password with Forgot link */}
           <div style={s.formGroup}>
-            <div style={s.labelRow}>
-              <label style={s.label}>Password</label>
-              <Link to="/forgot-password" style={s.forgotLink}>Forgot password?</Link>
-            </div>
+            <label style={s.label}>Password</label>
             <div style={s.inputWrapper}>
               <Lock style={s.inputIcon} />
               <input
                 type={showPassword ? "text" : "password"}
                 autoComplete="off"
-                name="login-password"
-                placeholder="Enter your password"
+                name="register-password"
+                placeholder="Create a password"
                 style={s.input}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -348,27 +306,29 @@ const LoginPage = () => {
               </button>
             </div>
           </div>
-
-          {/* Keep me logged in */}
-          <div style={s.checkboxRow}>
-            <input
-              id="keep-logged-in"
-              type="checkbox"
-              checked={keepLoggedIn}
-              onChange={(e) => setKeepLoggedIn(e.target.checked)}
-              style={{ accentColor: "#3b82f6", width: "15px", height: "15px", cursor: "pointer" }}
-            />
-            <label htmlFor="keep-logged-in" style={s.checkboxLabel}>Keep me logged in</label>
+          <div style={{ ...s.formGroup, marginBottom: "1.25rem" }}>
+            <label style={s.label}>Confirm Password</label>
+            <div style={s.inputWrapper}>
+              <Lock style={s.inputIcon} />
+              <input
+                type={showPassword ? "text" : "password"}
+                autoComplete="off"
+                name="register-password-confirm"
+                placeholder="Repeat password"
+                style={s.input}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
           </div>
-
           <button type="submit" style={s.submitBtn} disabled={loading}>
-            {loading ? <Loader2 className="animate-spin" size={18} /> : "Sign in"}
+            {loading ? <Loader2 className="animate-spin" size={18} /> : "Create Account"}
           </button>
-
           <div style={s.signupLink}>
-            <span style={{ color: "rgba(255,255,255,0.7)" }}>New to Smart Campus Hub? </span>
-            <Link to="/register" style={s.signupAnchor}>
-              Create an account →
+            <span style={{ color: "rgba(255,255,255,0.7)" }}>Already have an account? </span>
+            <Link to="/login" style={{...s.signupAnchor, color: "#93c5fd"}}>
+              Sign in →
             </Link>
           </div>
         </form>
@@ -386,4 +346,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;
