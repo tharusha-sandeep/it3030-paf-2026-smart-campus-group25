@@ -12,7 +12,13 @@ const AuthCallbackPage = () => {
     const token = searchParams.get("token");
     if (token) {
       login(token);
-      navigate("/dashboard");
+      // Decode role directly from JWT to decide where to go
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        navigate(payload.role === "ADMIN" ? "/admin/dashboard" : "/dashboard");
+      } catch {
+        navigate("/dashboard");
+      }
     } else {
       navigate("/login");
     }

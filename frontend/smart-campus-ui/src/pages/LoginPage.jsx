@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
+import { getRoleBasedPath } from "../utils/navigation";
 import {
   Mail,
   Lock,
@@ -236,7 +237,7 @@ const LoginPage = () => {
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, user } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -245,7 +246,7 @@ const LoginPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getRoleBasedPath(user)} replace />;
   }
 
   const handleLogin = async (e) => {
@@ -255,7 +256,8 @@ const LoginPage = () => {
     try {
       const response = await axiosInstance.post("/api/auth/login", { email, password });
       login(response.data.token);
-      navigate("/dashboard");
+      const decoded = response.data.token ? (() => { try { const p = JSON.parse(atob(response.data.token.split('.')[1])); return p; } catch { return {}; } })() : {};
+      navigate(decoded.role === "ADMIN" ? "/admin/dashboard" : "/dashboard");
     } catch (err) {
       if (err.response?.status === 401) {
         setError("Invalid email or password");
@@ -278,7 +280,7 @@ const LoginPage = () => {
     try {
       const response = await axiosInstance.post("/api/auth/register", { name: fullName, email, password });
       login(response.data.token);
-      navigate("/dashboard");
+      navigate("/dashboard"); // new accounts always start as USER
     } catch (err) {
       if (err.response?.status === 409) {
         setError("Email already registered");

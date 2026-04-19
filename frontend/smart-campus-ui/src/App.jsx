@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
+import { useAuth } from "./auth/AuthContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import AdminRoute from "./auth/AdminRoute";
+import { getRoleBasedPath } from "./utils/navigation";
 
 // Pages
 import LoginPage from "./pages/LoginPage";
@@ -10,6 +12,15 @@ import DashboardPage from "./pages/DashboardPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+
+/**
+ * Redirects authenticated users to their role-specific dashboard,
+ * unauthenticated users to /login.
+ */
+const DefaultRedirect = () => {
+  const { isAuthenticated, user } = useAuth();
+  return <Navigate to={isAuthenticated ? getRoleBasedPath(user) : "/login"} replace />;
+};
 
 function App() {
   return (
@@ -36,12 +47,13 @@ function App() {
           }
         />
 
-        {/* Default Redirects */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* Default Redirects — role-aware */}
+        <Route path="/" element={<DefaultRedirect />} />
+        <Route path="*" element={<DefaultRedirect />} />
       </Routes>
     </AuthProvider>
   );
 }
 
 export default App;
+
