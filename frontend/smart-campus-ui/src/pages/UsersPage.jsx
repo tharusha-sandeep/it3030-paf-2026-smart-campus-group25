@@ -19,6 +19,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
 
 const NAVY = "#1e3a5f";
 const NAVY_DARK = "#122a47";
@@ -104,7 +105,6 @@ const UsersPage = () => {
     setShowRoleModal(true);
   };
 
-  const handleNav = (path) => navigate(path);
 
   // Derived Stats
   const stats = useMemo(() => {
@@ -176,29 +176,7 @@ const UsersPage = () => {
 
   return (
     <div style={s.root}>
-      {/* SIDEBAR */}
-      <aside style={s.sidebar}>
-        <div style={s.sidebarBrand}>
-          <div style={s.brandIconBox}><ShieldCheck size={18} color="white" /></div>
-          <div><div style={s.brandTitle}>Smart Campus Hub</div><div style={s.brandSub}>Operations Platform</div></div>
-        </div>
-        <nav style={s.navSection}>
-          <button style={s.navItem(false)} onClick={() => handleNav("/admin/dashboard")}>
-            <LayoutDashboard size={18} /> Dashboard
-          </button>
-          <button style={s.navItem(false)} onClick={() => handleNav("/resources")}>
-            <Package size={18} /> Resources
-          </button>
-          <button style={s.navItem(true)}>
-            <Users size={18} /> Users
-          </button>
-          <button style={s.navItem(false)}><CalendarDays size={18} /> Bookings</button>
-          <button style={s.navItem(false)}><Ticket size={18} /> Tickets</button>
-        </nav>
-        <button style={s.logoutBtn} onClick={() => { logout(); navigate("/login"); }}>
-          <LogOut size={18} /> Logout
-        </button>
-      </aside>
+      <Sidebar activeId="users" />
 
       <main style={s.main}>
         <header style={s.topNav}>

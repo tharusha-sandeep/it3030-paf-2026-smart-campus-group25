@@ -30,6 +30,7 @@ import {
   Building,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
 
 const NAVY = "#1e3a5f";
 const NAVY_DARK = "#122a47";
@@ -110,7 +111,6 @@ const ResourcesPage = () => {
     status: "ACTIVE",
   });
 
-  const handleLogout = () => { logout(); navigate("/login"); };
 
   const fetchResources = async () => {
     setLoading(true);
@@ -254,7 +254,6 @@ const ResourcesPage = () => {
     }
   };
 
-  const handleNav = (path) => navigate(path);
 
   // ── Styles ───────────────────────────────────────────────────────────────
   const s = {
@@ -376,31 +375,7 @@ const ResourcesPage = () => {
   return (
     <div style={s.root}>
       {/* ── SIDEBAR ── */}
-      <aside style={s.sidebar}>
-        <div style={s.sidebarBrand}>
-          <div style={s.brandIconBox}><ShieldCheck size={18} color="white" /></div>
-          <div><div style={s.brandTitle}>Smart Campus Hub</div><div style={s.brandSub}>Operations Platform</div></div>
-        </div>
-        <nav style={s.navSection}>
-          <button style={s.navItem(false)} onClick={() => handleNav(isAdmin ? "/admin/dashboard" : "/dashboard")}>
-            <LayoutDashboard size={18} /> Dashboard
-          </button>
-          <button style={s.navItem(true)}>
-            <Package size={18} strokeWidth={2.25} /> Resources
-          </button>
-          {isAdmin && (
-            <>
-              <button style={s.navItem(false)}><CalendarDays size={18} /> Bookings</button>
-              <button style={s.navItem(false)}><Ticket size={18} /> Tickets</button>
-              <button style={s.navItem(false)}><Users size={18} /> Users</button>
-            </>
-          )}
-        </nav>
-        <div style={s.sidebarBottom}>
-          <button style={s.bottomBtn}><Settings size={18} /> Settings</button>
-          <button style={s.logoutBtn} onClick={handleLogout}><LogOut size={18} /> Logout</button>
-        </div>
-      </aside>
+      <Sidebar activeId="resources" />
 
       {/* ── MAIN ── */}
       <main style={s.main}>

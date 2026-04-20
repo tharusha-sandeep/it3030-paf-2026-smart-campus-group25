@@ -18,19 +18,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
+import Sidebar from "../components/Sidebar";
 
 const NAVY = "#1a3a6b";
 const NAVY_DARK = "#0f2447";
 
-// ── Sidebar navigation items ──────────────────────────────────────────────────
-const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
-  { icon: Package,         label: "Resources",  id: "resources" },
-  { icon: CalendarDays,    label: "Bookings",   id: "bookings" },
-  { icon: Ticket,          label: "Tickets",    id: "tickets" },
-  { icon: Bell,            label: "Notifications", id: "notifications" },
-  { icon: UserCircle,      label: "Profile",    id: "profile" },
-];
 
 // ── Mock stat card data ───────────────────────────────────────────────────────
 const STATS = [
@@ -132,10 +124,9 @@ const FEED = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-const DashboardPage = () => {
+  const DashboardPage = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeNav, setActiveNav] = useState("dashboard");
   const [resourceCount, setResourceCount] = useState("...");
 
   useEffect(() => {
@@ -150,19 +141,7 @@ const DashboardPage = () => {
     fetchResources();
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   const initials = user?.name ? user.name[0].toUpperCase() : "U";
-
-  const handleNavClick = (id) => {
-    setActiveNav(id);
-    if (id === "dashboard") navigate("/dashboard");
-    else if (id === "resources") navigate("/resources");
-    // Add other navigations here as needed
-  };
 
   // ── Styles ──────────────────────────────────────────────────────────────────
   const layout = {
@@ -617,51 +596,7 @@ const DashboardPage = () => {
   return (
     <div style={layout.root}>
       {/* ── SIDEBAR ────────────────────────────────────────────────── */}
-      <aside style={layout.sidebar}>
-        {/* Brand */}
-        <div style={layout.sidebarBrand}>
-          <div style={layout.brandIconBox}>
-            <ShieldCheck size={18} color="white" />
-          </div>
-          <div style={layout.brandText}>
-            <div style={layout.brandTitle}>Smart Campus Hub</div>
-            <div style={layout.brandSub}>University Ops Platform</div>
-          </div>
-        </div>
-
-        {/* Nav */}
-        <nav style={layout.navSection}>
-          {NAV_ITEMS.map((item) => {
-            const NavIcon = item.icon;
-            return (
-              <button
-                key={item.id}
-                style={layout.navItem(activeNav === item.id)}
-                onClick={() => handleNavClick(item.id)}
-              >
-                <NavIcon size={17} strokeWidth={activeNav === item.id ? 2.25 : 1.75} />
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Bottom */}
-        <div style={layout.sidebarBottom}>
-          <button style={layout.bottomBtn}>
-            <Settings size={17} strokeWidth={1.75} />
-            Settings
-          </button>
-          <button style={layout.bottomBtn}>
-            <HelpCircle size={17} strokeWidth={1.75} />
-            Help
-          </button>
-          <button style={layout.logoutBtn} onClick={handleLogout}>
-            <LogOut size={17} />
-            Logout
-          </button>
-        </div>
-      </aside>
+      <Sidebar activeId="dashboard" />
 
       {/* ── MAIN ───────────────────────────────────────────────────── */}
       <main style={layout.main}>

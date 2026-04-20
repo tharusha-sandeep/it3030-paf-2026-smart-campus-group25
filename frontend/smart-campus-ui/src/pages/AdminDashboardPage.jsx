@@ -34,18 +34,11 @@ import {
   Cell,
 } from "recharts";
 import { useAuth } from "../auth/AuthContext";
+import Sidebar from "../components/Sidebar";
 
 const NAVY = "#1a3a6b";
 const NAVY_DARK = "#0f2447";
 
-// ── Nav items ─────────────────────────────────────────────────────────────────
-const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: "Dashboard",  id: "dashboard" },
-  { icon: Package,         label: "Resources",  id: "resources" },
-  { icon: CalendarDays,    label: "Bookings",   id: "bookings"  },
-  { icon: Ticket,          label: "Tickets",    id: "tickets"   },
-  { icon: Users,           label: "Users",      id: "users"     },
-];
 
 // ── Booking trend data ────────────────────────────────────────────────────────
 const CHART_DATA = [
@@ -121,9 +114,9 @@ const CustomTooltip = ({ active, payload, label }) => {
 const AdminDashboardPage = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeNav, setActiveNav] = useState("dashboard");
-  const [chartView, setChartView] = useState("month");
+  const initials = user?.name ? user.name[0].toUpperCase() : "A";
   const [resourceCount, setResourceCount] = useState("...");
+  const [chartView, setChartView] = useState("month");
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -136,17 +129,6 @@ const AdminDashboardPage = () => {
     };
     fetchResources();
   }, []);
-
-  const handleLogout = () => { logout(); navigate("/login"); };
-  const initials = user?.name ? user.name[0].toUpperCase() : "A";
-
-  const handleNavClick = (id) => {
-    setActiveNav(id);
-    if (id === "dashboard") navigate("/admin/dashboard");
-    else if (id === "resources") navigate("/resources");
-    else if (id === "users") navigate("/users");
-    // Add other navigations here as needed
-  };
 
   // ── Stat cards config ────────────────────────────────────────────────────────
   const STATS = [
@@ -483,40 +465,7 @@ const AdminDashboardPage = () => {
 
   return (
     <div style={s.root}>
-      {/* ── SIDEBAR ─────────────────────────────────────────────────── */}
-      <aside style={s.sidebar}>
-        <div style={s.sidebarBrand}>
-          <div style={s.brandIconBox}>
-            <ShieldCheck size={18} color="white" />
-          </div>
-          <div>
-            <div style={s.brandTitle}>Smart Campus Hub</div>
-            <div style={s.brandSub}>Admin Console</div>
-          </div>
-        </div>
-
-        <nav style={s.navSection}>
-          {NAV_ITEMS.map((item) => {
-            const NavIcon = item.icon;
-            return (
-              <button
-                key={item.id}
-                style={s.navItem(activeNav === item.id)}
-                onClick={() => handleNavClick(item.id)}
-              >
-                <NavIcon size={17} strokeWidth={activeNav === item.id ? 2.25 : 1.75} />
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div style={s.sidebarBottom}>
-          <button style={s.bottomBtn}><Settings size={17} strokeWidth={1.75} /> Settings</button>
-          <button style={s.bottomBtn}><HelpCircle size={17} strokeWidth={1.75} /> Help</button>
-          <button style={s.logoutBtn} onClick={handleLogout}><LogOut size={17} /> Logout</button>
-        </div>
-      </aside>
+      <Sidebar activeId="dashboard" />
 
       {/* ── MAIN ────────────────────────────────────────────────────── */}
       <main style={s.main}>
@@ -532,9 +481,6 @@ const AdminDashboardPage = () => {
           </div>
 
           <div style={s.topNavRight}>
-            <button style={s.exportBtn}>
-              <Download size={15} /> Export Report
-            </button>
             <button style={s.newResourceBtn} onClick={() => navigate("/resources")}>
               <Plus size={15} /> New Resource
             </button>
