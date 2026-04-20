@@ -7,6 +7,7 @@ const initialState = {
   user: null,
   token: null,
   isAuthenticated: false,
+  loading: true,
 };
 
 const authReducer = (state, action) => {
@@ -16,7 +17,6 @@ const authReducer = (state, action) => {
       try {
         const decoded = jwtDecode(token);
         
-        // Handle various common JWT claim names for roles
         const rawRole = decoded.role || decoded.roles || decoded.authorities;
         const normalizedRole =
           (Array.isArray(rawRole) && rawRole.some((r) => r.includes("ADMIN"))) ||
@@ -32,21 +32,28 @@ const authReducer = (state, action) => {
         };
         
         localStorage.setItem("sc_token", token);
+        localStorage.setItem("userRole", normalizedRole);
+
         return {
           ...state,
           user,
           token,
           isAuthenticated: true,
+          loading: false,
         };
       } catch (error) {
         console.error("Invalid token", error);
         localStorage.removeItem("sc_token");
-        return initialState;
+        localStorage.removeItem("userRole");
+        return { ...initialState, loading: false };
       }
     }
     case "LOGOUT":
       localStorage.removeItem("sc_token");
-      return initialState;
+      localStorage.removeItem("userRole");
+      return { ...initialState, loading: false };
+    case "FINISH_LOADING":
+      return { ...state, loading: false };
     default:
       return state;
   }
@@ -56,10 +63,23 @@ export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   useEffect(() => {
-    const token = localStorage.getItem("sc_token");
-    if (token) {
-      dispatch({ type: "LOGIN", payload: token });
-    }
+    const initializeAuth = () => {
+      const token = localStorage.getItem("sc_token");
+      const savedRole = localStorage.getItem("userRole");
+
+      if (token) {
+        // Dispatching LOGIN will validate and decode
+        dispatch({ type: "LOGIN", payload: token });
+      } else {
+        // If Role exists without token, clear role
+        if (savedRole) {
+          localStorage.removeItem("userRole");
+        }
+        dispatch({ type: "FINISH_LOADING" });
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = (token) => dispatch({ type: "LOGIN", payload: token });
