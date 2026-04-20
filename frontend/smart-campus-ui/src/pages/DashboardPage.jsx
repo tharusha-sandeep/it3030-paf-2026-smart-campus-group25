@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import Sidebar from "../components/Sidebar";
+import ProfileDropdown from "../components/ProfileDropdown";
 
 const NAVY = "#1a3a6b";
 const NAVY_DARK = "#0f2447";
@@ -321,21 +322,6 @@ const FEED = [
       backgroundColor: "#ef4444",
       border: "2px solid white",
     },
-    avatar: {
-      width: "36px",
-      height: "36px",
-      borderRadius: "50%",
-      background: `linear-gradient(135deg, ${NAVY} 0%, ${NAVY_DARK} 100%)`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "white",
-      fontWeight: "700",
-      fontSize: "0.875rem",
-      cursor: "pointer",
-      userSelect: "none",
-    },
-
     // CONTENT
     content: {
       padding: "1.75rem",
@@ -615,7 +601,7 @@ const FEED = [
               <Bell size={20} color="#64748b" />
               <span style={layout.bellDot} />
             </button>
-            <div style={layout.avatar}>{initials}</div>
+            <ProfileDropdown />
           </div>
         </header>
 

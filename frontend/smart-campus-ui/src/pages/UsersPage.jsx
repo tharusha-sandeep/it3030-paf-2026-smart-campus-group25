@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import ProfileDropdown from "../components/ProfileDropdown";
 
 const NAVY = "#1e3a5f";
 const NAVY_DARK = "#122a47";
@@ -181,7 +182,7 @@ const UsersPage = () => {
       <main style={s.main}>
         <header style={s.topNav}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={s.avatar}>{initials}</div>
+            <ProfileDropdown />
           </div>
         </header>
 

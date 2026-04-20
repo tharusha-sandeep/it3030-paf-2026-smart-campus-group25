@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import ProfileDropdown from "../components/ProfileDropdown";
 
 const NAVY = "#1e3a5f";
 const NAVY_DARK = "#122a47";
@@ -383,7 +384,7 @@ const ResourcesPage = () => {
         <header style={s.topNav}>
           <div style={s.topNavRight}>
             <button style={s.bellBtn}><Bell size={20} /><span style={s.bellDot} /></button>
-            <div style={s.avatar}>{initials}</div>
+            <ProfileDropdown />
           </div>
         </header>
 

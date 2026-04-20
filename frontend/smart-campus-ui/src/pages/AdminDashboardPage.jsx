@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
+import ProfileDropdown from "../components/ProfileDropdown";
 import {
   LayoutDashboard,
   Package,
@@ -34,7 +36,6 @@ import {
   Cell,
 } from "recharts";
 import { useAuth } from "../auth/AuthContext";
-import Sidebar from "../components/Sidebar";
 
 const NAVY = "#1a3a6b";
 const NAVY_DARK = "#0f2447";
@@ -114,7 +115,6 @@ const CustomTooltip = ({ active, payload, label }) => {
 const AdminDashboardPage = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const initials = user?.name ? user.name[0].toUpperCase() : "A";
   const [resourceCount, setResourceCount] = useState("...");
   const [chartView, setChartView] = useState("month");
 
@@ -333,14 +333,6 @@ const AdminDashboardPage = () => {
       backgroundColor: "#ef4444",
       border: "2px solid white",
     },
-    adminAvatar: {
-      width: "36px", height: "36px",
-      borderRadius: "50%",
-      background: `linear-gradient(135deg, ${NAVY} 0%, ${NAVY_DARK} 100%)`,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      color: "white", fontWeight: "700", fontSize: "0.875rem",
-      cursor: "pointer", userSelect: "none",
-    },
 
     // CONTENT
     content: { padding: "1.75rem", flex: 1 },
@@ -488,7 +480,7 @@ const AdminDashboardPage = () => {
               <Bell size={20} color="#64748b" />
               <span style={s.bellDot} />
             </button>
-            <div style={s.adminAvatar}>{initials}</div>
+            <ProfileDropdown />
           </div>
         </header>
 

@@ -28,6 +28,7 @@ public class JwtUtils {
                 .claim("email", user.getEmail())
                 .claim("name", user.getName())
                 .claim("role", user.getRole().name())
+                .claim("authProvider", user.getAuthProvider().name())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(getSigningKey(), Jwts.SIG.HS256)

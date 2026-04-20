@@ -16,6 +16,8 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ResourcesPage from "./pages/ResourcesPage";
 import UsersPage from "./pages/UsersPage";
+import ProfilePage from "./pages/ProfilePage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 
 /**
  * Redirects authenticated users to their role-specific dashboard,
@@ -73,6 +75,8 @@ const AppRoutes = () => {
       
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/change-password" element={<ChangePasswordPage />} />
       </Route>
 
       {/* Admin-only Route */}

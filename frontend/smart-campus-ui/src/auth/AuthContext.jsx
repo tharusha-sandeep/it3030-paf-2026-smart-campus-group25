@@ -29,6 +29,7 @@ const authReducer = (state, action) => {
           name: decoded.name || decoded.full_name || decoded.email?.split("@")[0],
           email: decoded.email,
           role: normalizedRole,
+          authProvider: decoded.authProvider || "LOCAL", // Default to LOCAL if not found
         };
         
         localStorage.setItem("sc_token", token);

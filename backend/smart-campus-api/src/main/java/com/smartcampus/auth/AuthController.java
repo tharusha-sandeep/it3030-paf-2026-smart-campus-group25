@@ -95,12 +95,39 @@ public class AuthController {
         return ResponseEntity.ok(mapToResponse(user));
     }
 
+    @PutMapping("/change-password")
+    public ResponseEntity<Void> changePassword(@RequestBody ChangePasswordDTO dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String userId = authentication.getName();
+        AppUser user = userRepository.findById(UUID.fromString(userId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (user.getAuthProvider() != AuthProvider.LOCAL) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password change not allowed for " + user.getAuthProvider() + " accounts");
+        }
+
+        if (!passwordEncoder.matches(dto.currentPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.newPassword()));
+        userRepository.save(user);
+
+        return ResponseEntity.ok().build();
+    }
+
     private UserResponseDTO mapToResponse(AppUser user) {
+
         return new UserResponseDTO(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getRole().name(),
+                user.getAuthProvider().name(),
                 user.getProfilePicture(),
                 user.getCreatedAt()
         );
