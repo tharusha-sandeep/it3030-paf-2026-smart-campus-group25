@@ -18,6 +18,8 @@ import ResourcesPage from "./pages/ResourcesPage";
 import UsersPage from "./pages/UsersPage";
 import ProfilePage from "./pages/ProfilePage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import BookingsPage from "./pages/BookingsPage";
+import AdminBookingsPage from "./pages/AdminBookingsPage";
 
 /**
  * Redirects authenticated users to their role-specific dashboard,
@@ -77,9 +79,10 @@ const AppRoutes = () => {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/change-password" element={<ChangePasswordPage />} />
+        <Route path="/bookings" element={<BookingsPage />} />
       </Route>
 
-      {/* Admin-only Route */}
+      {/* Admin-only Routes */}
       <Route
         path="/admin/dashboard"
         element={
@@ -88,14 +91,8 @@ const AppRoutes = () => {
           </AdminRoute>
         }
       />
-      <Route
-        path="/users"
-        element={
-          <AdminRoute>
-            <UsersPage />
-          </AdminRoute>
-        }
-      />
+      <Route path="/users" element={<AdminRoute><UsersPage /></AdminRoute>} />
+      <Route path="/admin/bookings" element={<AdminRoute><AdminBookingsPage /></AdminRoute>} />
 
       {/* Default Redirects — role-aware */}
       <Route path="/" element={<DefaultRedirect />} />

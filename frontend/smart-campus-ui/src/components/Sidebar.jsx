@@ -31,6 +31,7 @@ const Sidebar = ({ activeId }) => {
   ];
 
   if (isAdmin) {
+    navItems.push({ id: "admin-bookings", label: "Manage Bookings", icon: CalendarDays, path: "/admin/bookings" });
     navItems.push({ id: "users", label: "Users", icon: Users, path: "/users" });
   }
 
