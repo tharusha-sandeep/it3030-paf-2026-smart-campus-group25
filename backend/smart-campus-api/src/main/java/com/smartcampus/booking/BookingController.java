@@ -15,6 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bookings")
+@CrossOrigin(origins = "*")
 public class BookingController {
 
     private final BookingService bookingService;
@@ -82,6 +83,27 @@ public class BookingController {
     public ResponseEntity<BookingResponseDTO> cancelBooking(@PathVariable Long id) {
         String userId = getAuthenticatedUserId();
         return ResponseEntity.ok(bookingService.cancelBooking(id, userId));
+    }
+
+    /**
+     * PUT /api/bookings/{id} — Update own PENDING booking (authenticated user).
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<BookingResponseDTO> updateBooking(
+            @PathVariable Long id,
+            @Valid @RequestBody BookingRequestDTO dto) {
+        String userId = getAuthenticatedUserId();
+        return ResponseEntity.ok(bookingService.updateBooking(id, dto, userId));
+    }
+
+    /**
+     * DELETE /api/bookings/{id} — Delete own PENDING or CANCELLED booking (authenticated user).
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBooking(@PathVariable Long id) {
+        String userId = getAuthenticatedUserId();
+        bookingService.deleteBooking(id, userId);
+        return ResponseEntity.noContent().build();
     }
 
     // ── Helper ──────────────────────────────────────────────────────────────

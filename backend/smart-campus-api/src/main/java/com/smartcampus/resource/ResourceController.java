@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/resources")
+@CrossOrigin(origins = "*")
 public class ResourceController {
 
     private final ResourceService resourceService;

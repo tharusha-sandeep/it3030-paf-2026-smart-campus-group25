@@ -132,6 +132,70 @@ public class BookingServiceImpl implements BookingService {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
+    @Override
+    @Transactional
+    public BookingResponseDTO updateBooking(Long bookingId, BookingRequestDTO dto, String userId) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        // Ownership check
+        if (!booking.getUser().getId().toString().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You are not allowed to edit this booking");
+        }
+
+        // Only PENDING bookings can be edited
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Only PENDING bookings can be edited");
+        }
+
+        if (!dto.getEndTime().isAfter(dto.getStartTime())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "End time must be after start time");
+        }
+
+        // Conflict check (exclude current booking)
+        List<Booking> conflicts = bookingRepository.findOverlappingBookings(
+                booking.getResource().getId(),
+                dto.getBookingDate(),
+                dto.getStartTime(),
+                dto.getEndTime(),
+                bookingId
+        );
+        if (!conflicts.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Resource is already booked for the selected time slot");
+        }
+
+        booking.setBookingDate(dto.getBookingDate());
+        booking.setStartTime(dto.getStartTime());
+        booking.setEndTime(dto.getEndTime());
+        booking.setPurpose(dto.getPurpose());
+        booking.setAttendees(dto.getAttendees());
+
+        return mapToDTO(bookingRepository.save(booking));
+    }
+
+    @Override
+    @Transactional
+    public void deleteBooking(Long bookingId, String userId) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        // Ownership check
+        if (!booking.getUser().getId().toString().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You are not allowed to delete this booking");
+        }
+
+        // Only PENDING or CANCELLED bookings can be deleted
+        if (booking.getStatus() == BookingStatus.APPROVED || booking.getStatus() == BookingStatus.REJECTED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Only PENDING or CANCELLED bookings can be deleted");
+        }
+
+        bookingRepository.deleteById(bookingId);
+    }
+
     private Booking getBookingOrThrow(Long id) {
         return bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));

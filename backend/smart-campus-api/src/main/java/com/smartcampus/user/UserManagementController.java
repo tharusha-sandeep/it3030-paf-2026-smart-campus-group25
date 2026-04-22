@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@CrossOrigin(origins = "*")
 public class UserManagementController {
 
     private final UserRepository userRepository;

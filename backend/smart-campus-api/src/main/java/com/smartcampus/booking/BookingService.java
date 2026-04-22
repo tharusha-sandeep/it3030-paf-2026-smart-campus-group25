@@ -16,4 +16,8 @@ public interface BookingService {
     BookingResponseDTO rejectBooking(Long bookingId, String rejectionReason);
 
     BookingResponseDTO cancelBooking(Long bookingId, String userId);
+
+    BookingResponseDTO updateBooking(Long bookingId, BookingRequestDTO dto, String userId);
+
+    void deleteBooking(Long bookingId, String userId);
 }
