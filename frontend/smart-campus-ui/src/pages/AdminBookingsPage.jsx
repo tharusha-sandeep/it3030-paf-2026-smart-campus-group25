@@ -6,28 +6,8 @@ import RejectModal from "../components/RejectModal";
 import toast from "react-hot-toast";
 import {
   CalendarDays, Loader2, AlertCircle, RefreshCw,
-  CheckCircle, XCircle, Clock3, Filter, Clock, MapPin, Users
+  CheckCircle2, XCircle, Clock3, Filter, Clock, MapPin, Users, Search
 } from "lucide-react";
-
-const NAVY = "#1e3a5f";
-const NAVY_DARK = "#122a47";
-
-const STATUS_CONFIG = {
-  PENDING:   { label: "Pending",   bg: "#fef9c3", color: "#854d0e", icon: Clock3 },
-  APPROVED:  { label: "Approved",  bg: "#dcfce7", color: "#166534", icon: CheckCircle },
-  REJECTED:  { label: "Rejected",  bg: "#fef2f2", color: "#991b1b", icon: XCircle },
-  CANCELLED: { label: "Cancelled", bg: "#f1f5f9", color: "#64748b", icon: XCircle },
-};
-
-const StatusBadge = ({ status }) => {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
-  const Icon = cfg.icon;
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 10px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "700", backgroundColor: cfg.bg, color: cfg.color }}>
-      <Icon size={12} /> {cfg.label}
-    </span>
-  );
-};
 
 const AdminBookingsPage = () => {
   const [bookings, setBookings] = useState([]);
@@ -52,7 +32,7 @@ const AdminBookingsPage = () => {
       const res = await axiosInstance.get("/api/bookings", { params });
       setBookings(res.data);
     } catch {
-      setError("Failed to load bookings.");
+      setError("Failed to fetch administrative records.");
     } finally {
       setLoading(false);
     }
@@ -67,162 +47,138 @@ const AdminBookingsPage = () => {
   const handleApprove = async (id) => {
     try {
       await axiosInstance.put(`/api/bookings/${id}/approve`);
-      toast.success("Booking approved!");
+      toast.success("Request approved");
       fetchBookings();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to approve.");
+      toast.error(err.response?.data?.message || "Operation failed");
     }
   };
 
-  const s = {
-    root: { display: "flex", minHeight: "100vh", backgroundColor: "#f5f6fa", fontFamily: "'Inter', sans-serif" },
-    main: { marginLeft: "220px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
-    topNav: { backgroundColor: "white", padding: "0 1.5rem", height: "60px", display: "flex", alignItems: "center", justifyContent: "flex-end", borderBottom: "1px solid #f1f5f9", position: "sticky", top: 0, zIndex: 50 },
-    content: { padding: "1.75rem" },
-    pageHeader: { marginBottom: "1.5rem" },
-    pageTitle: { fontSize: "1.625rem", fontWeight: "800", color: "#0f172a", margin: 0 },
-    pageSub: { fontSize: "0.875rem", color: "#64748b", margin: "4px 0 0 0" },
-
-    // Filters
-    filterBar: { display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap", alignItems: "center", backgroundColor: "white", padding: "1rem 1.25rem", borderRadius: "12px", border: "1px solid #f1f5f9", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" },
-    filterLabel: { display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8125rem", fontWeight: "600", color: "#475569" },
-    select: { padding: "8px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "0.875rem", color: "#0f172a", outline: "none", backgroundColor: "white", minWidth: "160px" },
-    dateInput: { padding: "8px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "0.875rem", color: "#0f172a", outline: "none" },
-    clearBtn: { padding: "8px 16px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "0.8125rem", fontWeight: "600", color: "#64748b", backgroundColor: "white", cursor: "pointer" },
-
-    // Table
-    tableWrap: { backgroundColor: "white", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" },
-    table: { width: "100%", borderCollapse: "collapse" },
-    th: { padding: "0.875rem 1.25rem", backgroundColor: "#f8fafc", color: "#64748b", fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.04em", borderBottom: "1px solid #e2e8f0", textAlign: "left" },
-    td: { padding: "1rem 1.25rem", borderBottom: "1px solid #f1f5f9", color: "#374151", fontSize: "0.875rem", verticalAlign: "middle" },
-    strongText: { fontWeight: "600", color: "#0f172a", display: "block" },
-    subText: { color: "#64748b", fontSize: "0.8rem" },
-    approveBtn: { padding: "6px 14px", border: "none", borderRadius: "8px", backgroundColor: "#dcfce7", color: "#166534", fontSize: "0.8125rem", fontWeight: "700", cursor: "pointer", marginRight: "6px" },
-    rejectBtn: { padding: "6px 14px", border: "none", borderRadius: "8px", backgroundColor: "#fef2f2", color: "#dc2626", fontSize: "0.8125rem", fontWeight: "700", cursor: "pointer" },
-    rejectionNote: { fontSize: "0.75rem", color: "#991b1b", backgroundColor: "#fef2f2", padding: "3px 8px", borderRadius: "6px", display: "inline-block", marginTop: "4px" },
-
-    stateBox: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5rem 2rem", textAlign: "center", color: "#64748b" },
+  const getStatusBadge = (status) => {
+    const maps = {
+      APPROVED: "badge-approved",
+      PENDING: "badge-pending",
+      REJECTED: "badge-rejected",
+      CANCELLED: "badge-muted"
+    };
+    return `badge ${maps[status] || "badge-pending"}`;
   };
 
-  const renderTable = () => {
-    if (loading) return (
-      <div style={s.stateBox}>
-        <Loader2 size={36} color={NAVY} style={{ animation: "spin 1s linear infinite" }} />
-        <p style={{ marginTop: "1rem" }}>Loading bookings...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-    if (error) return (
-      <div style={s.stateBox}>
-        <AlertCircle size={40} color="#ef4444" />
-        <p style={{ marginTop: "1rem" }}>{error}</p>
-        <button onClick={fetchBookings} style={{ padding: "9px 20px", border: "none", borderRadius: "9px", background: NAVY, color: "white", fontWeight: "600", cursor: "pointer", marginTop: "1rem", display: "flex", alignItems: "center", gap: "8px" }}>
-          <RefreshCw size={16} /> Retry
-        </button>
-      </div>
-    );
-    if (bookings.length === 0) return (
-      <div style={s.stateBox}>
-        <CalendarDays size={48} color="#94a3b8" />
-        <p style={{ marginTop: "1rem", fontWeight: "600" }}>No bookings found</p>
-        <p style={{ fontSize: "0.875rem" }}>Try adjusting the filters above.</p>
-      </div>
-    );
+  const styles = {
+    root: { display: "flex", minHeight: "100vh", backgroundColor: "#F8FAFC" },
+    main: { marginLeft: "240px", flex: 1, display: "flex", flexDirection: "column" },
+    header: { height: "64px", backgroundColor: "white", borderBottom: "1px solid #E2E8F0", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "flex-end", position: "sticky", top: 0, zIndex: 50 },
+    content: { padding: "32px", maxWidth: "1400px", margin: "0 auto", width: "100%" },
+    pageHeader: { marginBottom: "32px" },
+    title: { fontSize: "24px", fontWeight: "700", color: "#0F172A" },
+    sub: { fontSize: "14px", color: "#64748B", marginTop: "4px" },
 
-    return (
-      <table style={s.table}>
-        <thead>
-          <tr>
-            <th style={s.th}>#</th>
-            <th style={s.th}>User</th>
-            <th style={s.th}>Resource</th>
-            <th style={s.th}>Schedule</th>
-            <th style={s.th}>Attendees</th>
-            <th style={s.th}>Status</th>
-            <th style={s.th}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bookings.map(b => (
-            <tr key={b.id} style={{ transition: "background 0.15s" }}
-              onMouseOver={e => e.currentTarget.style.backgroundColor = "#f8fafc"}
-              onMouseOut={e => e.currentTarget.style.backgroundColor = "transparent"}>
-              <td style={s.td}><span style={{ color: "#94a3b8", fontWeight: "600" }}>#{b.id}</span></td>
-              <td style={s.td}>
-                <span style={s.strongText}>{b.userName}</span>
-              </td>
-              <td style={s.td}>
-                <span style={s.strongText}>{b.resourceName}</span>
-                {b.resourceLocation && <span style={s.subText}><MapPin size={11} style={{ display: "inline", marginRight: 3 }} />{b.resourceLocation}</span>}
-              </td>
-              <td style={s.td}>
-                <span style={s.strongText}><CalendarDays size={12} style={{ display: "inline", marginRight: 4 }} />{b.bookingDate}</span>
-                <span style={s.subText}><Clock size={11} style={{ display: "inline", marginRight: 3 }} />{b.startTime} – {b.endTime}</span>
-              </td>
-              <td style={s.td}>
-                <span style={{ display: "flex", alignItems: "center", gap: "5px" }}><Users size={14} />{b.attendees}</span>
-              </td>
-              <td style={s.td}>
-                <StatusBadge status={b.status} />
-                {b.status === "REJECTED" && b.rejectionReason && (
-                  <span style={s.rejectionNote}>{b.rejectionReason}</span>
-                )}
-              </td>
-              <td style={s.td}>
-                {b.status === "PENDING" && (
-                  <>
-                    <button style={s.approveBtn} onClick={() => handleApprove(b.id)}>Approve</button>
-                    <button style={s.rejectBtn} onClick={() => setRejectTarget(b)}>Reject</button>
-                  </>
-                )}
-                {b.status !== "PENDING" && <span style={{ color: "#cbd5e1", fontSize: "0.8rem" }}>—</span>}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+    filterBar: {
+      backgroundColor: "white", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "16px",
+      display: "flex", gap: "16px", marginBottom: "32px", alignItems: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+    },
+    select: {
+      padding: "10px 16px", borderRadius: "8px", border: "1px solid #E2E8F0",
+      backgroundColor: "white", fontSize: "13px", fontWeight: "500", color: "#334155", outline: "none"
+    },
+
+    tableContainer: {
+      backgroundColor: "white", borderRadius: "12px", border: "1px solid #E2E8F0",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.06)", overflow: "hidden"
+    },
+    table: { width: "100%", borderCollapse: "collapse", textAlign: "left" },
+    th: { padding: "12px 24px", backgroundColor: "#F8FAFC", borderBottom: "1px solid #E2E8F0", fontSize: "11px", fontWeight: "600", color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" },
+    td: { padding: "16px 24px", borderBottom: "1px solid #F1F5F9", fontSize: "14px", color: "#374151", verticalAlign: "middle" },
+    row: { transition: "background 0.15s" },
+    
+    emptyState: { padding: "80px 20px", textAlign: "center", backgroundColor: "white", borderRadius: "12px", border: "1px dashed #E2E8F0" }
   };
 
   return (
-    <div style={s.root}>
+    <div style={styles.root}>
       <Sidebar activeId="admin-bookings" />
-      <main style={s.main}>
-        <header style={s.topNav}><ProfileDropdown /></header>
-        <div style={s.content}>
-          <div style={s.pageHeader}>
-            <h1 style={s.pageTitle}>Manage Bookings</h1>
-            <p style={s.pageSub}>Review, approve, and reject campus resource booking requests</p>
+      <main style={styles.main}>
+        <header style={styles.header}>
+          <ProfileDropdown />
+        </header>
+
+        <div style={styles.content}>
+          <div style={styles.pageHeader}>
+            <h1 style={styles.title}>Administrative Review</h1>
+            <p style={styles.sub}>Manage campus reservation requests and schedules.</p>
           </div>
 
-          {/* Filters */}
-          <div style={s.filterBar}>
-            <span style={s.filterLabel}><Filter size={14} /> Filters:</span>
-            <select style={s.select} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-              <option value="">All Statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
-            <input type="date" style={s.dateInput} value={filterDate} onChange={e => setFilterDate(e.target.value)} />
-            <select style={s.select} value={filterResource} onChange={e => setFilterResource(e.target.value)}>
-              <option value="">All Resources</option>
-              {resources.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-            {(filterStatus || filterDate || filterResource) && (
-              <button style={s.clearBtn} onClick={() => { setFilterStatus(""); setFilterDate(""); setFilterResource(""); }}>
-                Clear Filters
-              </button>
+          <div style={styles.filterBar}>
+             <div style={{ display: "flex", alignItems: "center", gap: "10px", backgroundColor: "#F1F5F9", padding: "10px 16px", borderRadius: "8px", flex: 1 }}>
+                <Search size={18} color="#94A3B8" />
+                <input style={{ border: "none", background: "none", outline: "none", fontSize: "14px", width: "100%" }} placeholder="Filter entries..." />
+             </div>
+             <select style={styles.select} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                <option value="">Status: All</option>
+                <option value="PENDING">Pending</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+             </select>
+             <input type="date" style={styles.select} value={filterDate} onChange={e => setFilterDate(e.target.value)} />
+             <select style={styles.select} value={filterResource} onChange={e => setFilterResource(e.target.value)}>
+                <option value="">Resource: All</option>
+                {resources.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+             </select>
+             {(filterStatus || filterDate || filterResource) && (
+               <button className="btn-secondary" style={{ padding: "10px 16px" }} onClick={() => { setFilterStatus(""); setFilterDate(""); setFilterResource(""); }}>Reset</button>
+             )}
+          </div>
+
+          <div style={styles.tableContainer}>
+            {loading ? (
+              <div style={{ padding: "100px", textAlign: "center" }}><Loader2 size={40} className="animate-spin" color="#0EA5E9" /></div>
+            ) : bookings.length === 0 ? (
+              <div style={styles.emptyState}>No records found matching your criteria.</div>
+            ) : (
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Record</th>
+                    <th style={styles.th}>Requester</th>
+                    <th style={styles.th}>Asset</th>
+                    <th style={styles.th}>Schedule</th>
+                    <th style={styles.th}>Status</th>
+                    <th style={styles.th}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bookings.map(b => (
+                    <tr key={b.id} style={styles.row} onMouseOver={e => e.currentTarget.style.backgroundColor = "#F8FAFC"} onMouseOut={e => e.currentTarget.style.backgroundColor = "transparent"}>
+                      <td style={styles.td}><span style={{ color: "#94A3B8", fontWeight: "600", fontSize: "12px" }}>#{b.id}</span></td>
+                      <td style={styles.td}><div style={{ fontWeight: "600", color: "#0F172A" }}>{b.userName}</div></td>
+                      <td style={styles.td}>
+                        <div style={{ fontWeight: "600", color: "#0F172A" }}>{b.resourceName}</div>
+                        {b.resourceLocation && <div style={{ fontSize: "12px", color: "#64748B", display: "flex", alignItems: "center", gap: "4px", marginTop: "2px" }}><MapPin size={12} /> {b.resourceLocation}</div>}
+                      </td>
+                      <td style={styles.td}>
+                        <div style={{ fontWeight: "500", color: "#374151" }}>{new Date(b.bookingDate).toLocaleDateString()}</div>
+                        <div style={{ fontSize: "12px", color: "#64748B", display: "flex", alignItems: "center", gap: "4px" }}><Clock size={12} /> {b.startTime} - {b.endTime}</div>
+                      </td>
+                      <td style={styles.td}>
+                        <span className={getStatusBadge(b.status)}>{b.status.toLowerCase()}</span>
+                        {b.status === "REJECTED" && b.rejectionReason && (
+                          <div style={{ fontSize: "11px", color: "#DC2626", marginTop: "4px", maxWidth: "150px" }}>{b.rejectionReason}</div>
+                        )}
+                      </td>
+                      <td style={styles.td}>
+                         {b.status === "PENDING" ? (
+                           <div style={{ display: "flex", gap: "8px" }}>
+                             <button onClick={() => handleApprove(b.id)} style={{ padding: "6px 12px", borderRadius: "6px", border: "none", backgroundColor: "#D1FAE5", color: "#065F46", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Approve</button>
+                             <button onClick={() => setRejectTarget(b)} style={{ padding: "6px 12px", borderRadius: "6px", border: "none", backgroundColor: "#FEE2E2", color: "#991B1B", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Reject</button>
+                           </div>
+                         ) : <span style={{ color: "#CBD5E1" }}>—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
-
-          {/* Stats summary */}
-          <p style={{ fontSize: "0.8125rem", color: "#94a3b8", marginBottom: "1rem" }}>
-            {loading ? "..." : `${bookings.length} booking${bookings.length !== 1 ? "s" : ""} found`}
-          </p>
-
-          <div style={s.tableWrap}>{renderTable()}</div>
         </div>
       </main>
 

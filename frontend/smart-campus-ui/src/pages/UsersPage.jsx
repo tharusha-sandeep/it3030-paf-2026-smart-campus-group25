@@ -3,39 +3,31 @@ import { useAuth } from "../auth/AuthContext";
 import axiosInstance from "../api/axiosInstance";
 import toast from "react-hot-toast";
 import {
-  LayoutDashboard,
-  Package,
-  CalendarDays,
-  Ticket,
-  Users,
-  LogOut,
   Search,
-  ShieldCheck,
   UserPlus,
   Shield,
   User,
   Mail,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  X,
+  ShieldCheck,
+  UserCheck,
+  Trash2,
+  Users
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import ProfileDropdown from "../components/ProfileDropdown";
 
-const NAVY = "#1e3a5f";
-const NAVY_DARK = "#122a47";
-
 const UsersPage = () => {
-  const { user: currentUser, logout } = useAuth();
-  const navigate = useNavigate();
-  const initials = currentUser?.name ? currentUser.name[0].toUpperCase() : "A";
-
+  const { user: currentUser } = useAuth();
+  
   // Data State
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Filters & Search State
+  // Filters State
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterProvider, setFilterProvider] = useState("");
@@ -50,27 +42,34 @@ const UsersPage = () => {
     setLoading(true);
     setError(false);
     try {
+      console.log("Fetching users from /api/admin/users...");
       const res = await axiosInstance.get("/api/admin/users");
-      setUsers(res.data);
+      console.log("Users response:", res.data);
+      const usersData = res.data;
+      
+      let actualUsers = [];
+      if (Array.isArray(usersData)) actualUsers = usersData;
+      else if (Array.isArray(usersData?.content)) actualUsers = usersData.content;
+      
+      setUsers(actualUsers);
     } catch (err) {
+      console.log('Users API error:', err.response?.status, err.response?.data);
       setError(true);
-      toast.error("Failed to load users list.");
+      toast.error("Failed to load user directory.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
   const handleToggleStatus = async (userId, currentStatus) => {
     try {
       await axiosInstance.patch(`/api/admin/users/${userId}/status`, { enabled: !currentStatus });
-      toast.success("User status updated!");
+      toast.success("Security profile updated");
       fetchUsers();
     } catch (err) {
-      toast.error("Failed to update user status.");
+      toast.error("Status update restricted");
     }
   };
 
@@ -79,251 +78,166 @@ const UsersPage = () => {
     setActionLoading(true);
     try {
       await axiosInstance.patch(`/api/admin/users/${selectedUser.id}/role`, { role: newRole });
-      toast.success("Role updated successfully!");
+      toast.success("Permissions updated");
       setShowRoleModal(false);
       fetchUsers();
     } catch (err) {
-      toast.error("Failed to update role.");
+      toast.error("Role modification failed");
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+    if (!window.confirm("Permanent erasure of user data. Proceed?")) return;
     try {
       await axiosInstance.delete(`/api/admin/users/${userId}`);
-      toast.success("User deleted successfully.");
+      toast.success("User removed");
       fetchUsers();
     } catch (err) {
-      toast.error("Failed to delete user.");
+      toast.error("Deletion not permitted");
     }
   };
 
-  const openRoleModal = (u) => {
-    setSelectedUser(u);
-    setNewRole(u.role);
-    setShowRoleModal(true);
-  };
+  const stats = useMemo(() => ({
+    total: users.length,
+    admins: users.filter(u => u.role === "ADMIN").length,
+    regulars: users.filter(u => u.role === "USER").length,
+    google: users.filter(u => u.authProvider === "GOOGLE").length
+  }), [users]);
 
-
-  // Derived Stats
-  const stats = useMemo(() => {
-    return {
-      total: users.length,
-      admins: users.filter(u => u.role === "ADMIN").length,
-      regulars: users.filter(u => u.role === "USER").length,
-      google: users.filter(u => u.authProvider === "GOOGLE").length
-    };
-  }, [users]);
-
-  // Filtered List
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
-      const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           u.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = filterRole === "" || u.role === filterRole;
       const matchesProvider = filterProvider === "" || u.authProvider === filterProvider;
       return matchesSearch && matchesRole && matchesProvider;
     });
   }, [users, searchTerm, filterRole, filterProvider]);
 
-  // Styles
-  const s = {
-    root: { display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", backgroundColor: "#f8fafc" },
-    sidebar: { width: "220px", minWidth: "220px", backgroundColor: "white", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, height: "100vh", zIndex: 100 },
-    main: { marginLeft: "220px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
-    sidebarBrand: { padding: "1.25rem 1rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "10px" },
-    brandIconBox: { width: "34px", height: "34px", borderRadius: "9px", background: `linear-gradient(135deg, ${NAVY} 0%, ${NAVY_DARK} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-    brandTitle: { fontSize: "0.8rem", fontWeight: "700", color: "#0f172a", lineHeight: 1.2 },
-    brandSub: { fontSize: "0.625rem", color: "#94a3b8" },
-    navSection: { flex: 1, padding: "1rem 0.5rem", overflowY: "auto" },
-    navItem: (active) => ({ display: "flex", alignItems: "center", gap: "10px", padding: "9px 12px", borderRadius: "9px", marginBottom: "2px", cursor: "pointer", backgroundColor: active ? NAVY : "transparent", color: active ? "white" : "#475569", fontSize: "0.875rem", fontWeight: active ? "600" : "500", border: "none", width: "100%", textAlign: "left", transition: "all 0.2s" }),
-    logoutBtn: { display: "flex", alignItems: "center", gap: "10px", padding: "9px 12px", borderRadius: "9px", cursor: "pointer", color: "#ef4444", fontSize: "0.875rem", fontWeight: "600", border: "none", backgroundColor: "#fef2f2", width: "100%", textAlign: "left", margin: "0.75rem 0.5rem 1rem" },
-    topNav: { backgroundColor: "white", padding: "0 2rem", height: "64px", display: "flex", alignItems: "center", justifyContent: "flex-end", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
-    avatar: { width: "36px", height: "36px", borderRadius: "50%", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "700", fontSize: "0.875rem" },
-    content: { padding: "2rem", flex: 1, maxWidth: "1400px", margin: "0 auto", width: "100%", boxSizing: "border-box" },
-    pageHeader: { marginBottom: "2rem" },
-    pageTitle: { fontSize: "1.875rem", fontWeight: "800", color: "#0f172a", margin: 0, letterSpacing: "-0.03em" },
-    pageSub: { fontSize: "1rem", color: "#64748b", marginTop: "6px" },
-    statsRow: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1.5rem", marginBottom: "2rem" },
-    statCard: { backgroundColor: "white", padding: "1.5rem", borderRadius: "12px", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "1rem" },
-    statIcon: (bg, color) => ({ width: "48px", height: "48px", borderRadius: "12px", backgroundColor: bg, color: color, display: "flex", alignItems: "center", justifyContent: "center" }),
-    statLabel: { fontSize: "0.75rem", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.025em" },
-    statValue: { fontSize: "1.5rem", fontWeight: "800", color: "#0f172a" },
-    filterBar: { display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap" },
-    searchBox: { display: "flex", alignItems: "center", gap: "10px", backgroundColor: "white", border: "1px solid #e2e8f0", padding: "0 1rem", borderRadius: "10px", flex: 1, minWidth: "250px", height: "44px" },
-    searchInput: { border: "none", outline: "none", flex: 1, fontSize: "0.9375rem" },
-    select: { height: "44px", padding: "0 12px", borderRadius: "10px", border: "1px solid #e2e8f0", backgroundColor: "white", outline: "none", cursor: "pointer", fontSize: "0.875rem", color: "#475569", fontWeight: "500", minWidth: "150px" },
-    tableContainer: { backgroundColor: "white", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" },
+  const styles = {
+    root: { display: "flex", minHeight: "100vh", backgroundColor: "#F8FAFC" },
+    main: { marginLeft: "240px", flex: 1, display: "flex", flexDirection: "column" },
+    header: { height: "64px", backgroundColor: "white", borderBottom: "1px solid #E2E8F0", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "flex-end", position: "sticky", top: 0, zIndex: 50 },
+    content: { padding: "32px", maxWidth: "1400px", margin: "0 auto", width: "100%" },
+    pageHeader: { marginBottom: "32px" },
+    title: { fontSize: "24px", fontWeight: "700", color: "#0F172A" },
+    sub: { fontSize: "14px", color: "#64748B", marginTop: "4px" },
+
+    statsGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px", marginBottom: "32px" },
+    statCard: { backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #E2E8F0", display: "flex", alignItems: "center", gap: "16px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" },
+    statIcon: (bg, color) => ({ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: bg, color: color, display: "flex", alignItems: "center", justifyContent: "center" }),
+
+    filterBar: { backgroundColor: "white", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "16px", display: "flex", gap: "16px", marginBottom: "32px", alignItems: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" },
+    select: { padding: "10px 16px", borderRadius: "8px", border: "1px solid #E2E8F0", backgroundColor: "white", fontSize: "13px", fontWeight: "500", color: "#334155", outline: "none" },
+    
+    tableContainer: { backgroundColor: "white", borderRadius: "12px", border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", overflow: "hidden" },
     table: { width: "100%", borderCollapse: "collapse", textAlign: "left" },
-    th: { padding: "1rem 1.5rem", backgroundColor: "#f8fafc", color: "#64748b", fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0" },
-    td: { padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", verticalAlign: "middle" },
-    badge: (bg, color) => ({ display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "700", backgroundColor: bg, color: color }),
-    providerIcon: (google) => ({ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.875rem", color: google ? "#ea4335" : "#64748b", fontWeight: "600" }),
-    actionBtn: { padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: "8px", backgroundColor: "white", color: "#475569", fontSize: "0.8125rem", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" },
-    toggle: (active) => ({ width: "40px", height: "20px", borderRadius: "20px", backgroundColor: active ? "#22c55e" : "#cbd5e1", position: "relative", cursor: "pointer", transition: "background 0.3s" }),
-    toggleCircle: (active) => ({ width: "14px", height: "14px", borderRadius: "50%", backgroundColor: "white", position: "absolute", top: "3px", left: active ? "23px" : "3px", transition: "left 0.3s" }),
-    modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15,23,42,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(4px)" },
-    modal: { backgroundColor: "white", borderRadius: "16px", width: "400px", maxWidth: "90%", padding: "2rem", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" },
-    modalTitle: { margin: "0 0 1.5rem 0", fontSize: "1.25rem", fontWeight: "800", color: "#0f172a" },
-    formGroup: { marginBottom: "1.5rem" },
-    label: { display: "block", marginBottom: "0.5rem", fontSize: "0.875rem", fontWeight: "600", color: "#475569" },
-    btnPrimary: { width: "100%", padding: "10px", borderRadius: "10px", border: "none", backgroundColor: NAVY, color: "white", fontWeight: "700", cursor: "pointer" },
-    btnSecondary: { width: "100%", padding: "10px", borderRadius: "10px", border: "1px solid #e2e8f0", backgroundColor: "white", color: "#475569", fontWeight: "600", cursor: "pointer", marginTop: "10px" },
-    skeletonHeader: { height: "40px", backgroundColor: "#f1f5f9", margin: "1rem 1.5rem", borderRadius: "8px" },
-    skeletonRow: { height: "60px", backgroundColor: "#f8fafc", margin: "0.5rem 1.5rem", borderRadius: "8px" },
+    th: { padding: "12px 24px", backgroundColor: "#F8FAFC", borderBottom: "1px solid #E2E8F0", fontSize: "11px", fontWeight: "600", color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" },
+    td: { padding: "16px 24px", borderBottom: "1px solid #F1F5F9", fontSize: "14px", color: "#374151", verticalAlign: "middle" },
+
+    modalOverlay: { position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(4px)" },
+    modalPanel: { backgroundColor: "white", borderRadius: "16px", width: "100%", maxWidth: "420px", padding: "24px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" },
+
+    toggle: (active) => ({ width: "36px", height: "20px", borderRadius: "99px", backgroundColor: active ? "#10B981" : "#E2E8F0", position: "relative", cursor: "pointer", transition: "0.2s" }),
+    toggleCircle: (active) => ({ width: "14px", height: "14px", borderRadius: "50%", backgroundColor: "white", position: "absolute", top: "3px", left: active ? "19px" : "3px", transition: "0.2s" }),
   };
 
   return (
-    <div style={s.root}>
+    <div style={styles.root}>
       <Sidebar activeId="users" />
+      <main style={styles.main}>
+        <header style={styles.header}><ProfileDropdown /></header>
 
-      <main style={s.main}>
-        <header style={s.topNav}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <ProfileDropdown />
-          </div>
-        </header>
-
-        <div style={s.content}>
-          <div style={s.pageHeader}>
-            <h1 style={s.pageTitle}>User Management</h1>
-            <p style={s.pageSub}>Manage system users and their roles</p>
+        <div style={styles.content}>
+          <div style={styles.pageHeader}>
+            <h1 style={styles.title}>Access Management</h1>
+            <p style={styles.sub}>Control identities, permissions and authentication status.</p>
           </div>
 
-          {/* STATS */}
-          <div style={s.statsRow}>
-            <div style={s.statCard}>
-              <div style={s.statIcon("#eff6ff", "#3b82f6")}><Users size={24} /></div>
-              <div><div style={s.statLabel}>Total Users</div><div style={s.statValue}>{stats.total}</div></div>
+          <div style={styles.statsGrid}>
+            <div style={styles.statCard}>
+              <div style={styles.statIcon("#E0F2FE", "#0EA5E9")}><Users size={20} /></div>
+              <div><div style={{ fontSize: "24px", fontWeight: "700" }}>{stats.total}</div><div style={{ fontSize: "12px", color: "#64748B" }}>Total Users</div></div>
             </div>
-            <div style={s.statCard}>
-              <div style={s.statIcon("#f5f3ff", "#8b5cf6")}><Shield size={24} /></div>
-              <div><div style={s.statLabel}>Admins</div><div style={s.statValue}>{stats.admins}</div></div>
+            <div style={styles.statCard}>
+              <div style={styles.statIcon("#F3E8FF", "#8B5CF6")}><ShieldCheck size={20} /></div>
+              <div><div style={{ fontSize: "24px", fontWeight: "700" }}>{stats.admins}</div><div style={{ fontSize: "12px", color: "#64748B" }}>Administrators</div></div>
             </div>
-            <div style={s.statCard}>
-              <div style={s.statIcon("#f0fdf4", "#22c55e")}><User size={24} /></div>
-              <div><div style={s.statLabel}>Regular</div><div style={s.statValue}>{stats.regulars}</div></div>
+            <div style={styles.statCard}>
+              <div style={styles.statIcon("#D1FAE5", "#10B981")}><UserCheck size={20} /></div>
+              <div><div style={{ fontSize: "24px", fontWeight: "700" }}>{stats.regulars}</div><div style={{ fontSize: "12px", color: "#64748B" }}>Verified Users</div></div>
             </div>
-            <div style={s.statCard}>
-              <div style={s.statIcon("#fff7ed", "#f97316")}><Mail size={24} /></div>
-              <div><div style={s.statLabel}>Google Auth</div><div style={s.statValue}>{stats.google}</div></div>
+            <div style={styles.statCard}>
+              <div style={styles.statIcon("#FEF3C7", "#F59E0B")}><Mail size={20} /></div>
+              <div><div style={{ fontSize: "24px", fontWeight: "700" }}>{stats.google}</div><div style={{ fontSize: "12px", color: "#64748B" }}>Google SSO</div></div>
             </div>
           </div>
 
-          {/* FILTERS */}
-          <div style={s.filterBar}>
-            <div style={s.searchBox}>
-              <Search size={18} color="#94a3b8" />
-              <input 
-                style={s.searchInput} 
-                placeholder="Search by name or email..." 
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <select style={s.select} value={filterRole} onChange={e => setFilterRole(e.target.value)}>
-              <option value="">All Roles</option>
-              <option value="ADMIN">Admin</option>
-              <option value="USER">User</option>
-            </select>
-            <select style={s.select} value={filterProvider} onChange={e => setFilterProvider(e.target.value)}>
-              <option value="">All Providers</option>
-              <option value="GOOGLE">Google</option>
-              <option value="LOCAL">Local</option>
-            </select>
+          <div style={styles.filterBar}>
+             <div style={{ display: "flex", alignItems: "center", gap: "10px", backgroundColor: "#F1F5F9", padding: "10px 16px", borderRadius: "8px", flex: 1 }}>
+                <Search size={18} color="#94A3B8" />
+                <input style={{ border: "none", background: "none", outline: "none", fontSize: "14px", width: "100%" }} placeholder="Search directory..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+             </div>
+             <select style={styles.select} value={filterRole} onChange={e => setFilterRole(e.target.value)}>
+                <option value="">Role: All</option>
+                <option value="ADMIN">Admin</option>
+                <option value="USER">User</option>
+             </select>
+             <select style={styles.select} value={filterProvider} onChange={e => setFilterProvider(e.target.value)}>
+                <option value="">Provider: All</option>
+                <option value="GOOGLE">Google</option>
+                <option value="LOCAL">Local</option>
+             </select>
           </div>
 
-          {/* DATA TABLE */}
-          <div style={s.tableContainer}>
+          <div style={styles.tableContainer}>
             {loading ? (
-              <div>
-                <div style={{ ...s.skeletonHeader, animation: "pulse 1.5s infinite" }} />
-                {[1, 2, 3, 4, 5].map(i => <div key={i} style={{ ...s.skeletonRow, animation: "pulse 1.5s infinite" }} />)}
-              </div>
-            ) : error ? (
-              <div style={{ padding: "4rem", textAlign: "center" }}>
-                <AlertCircle size={48} color="#ef4444" style={{ marginBottom: "1rem" }} />
-                <p style={{ color: "#475569", marginBottom: "1.5rem" }}>Something went wrong while fetching users.</p>
-                <button onClick={fetchUsers} style={{ ...s.actionBtn, padding: "8px 24px" }}>Retry</button>
-              </div>
+               <div style={{ padding: "100px", textAlign: "center" }}><Loader2 className="animate-spin" color="#0EA5E9" size={40} /></div>
             ) : filteredUsers.length === 0 ? (
-              <div style={{ padding: "4rem", textAlign: "center", color: "#64748b" }}>
-                <UserPlus size={48} style={{ marginBottom: "1rem", opacity: 0.5 }} />
-                <h3>No users found</h3>
-                <p>Try adjusting your search or filters.</p>
-              </div>
+               <div style={{ padding: "100px", textAlign: "center", color: "#94A3B8" }}>No identities found.</div>
             ) : (
-              <table style={s.table}>
+              <table style={styles.table}>
                 <thead>
                   <tr>
-                    <th style={s.th}>User</th>
-                    <th style={s.th}>Role</th>
-                    <th style={s.th}>Provider</th>
-                    <th style={s.th}>Joined</th>
-                    <th style={s.th}>Status</th>
-                    <th style={s.th}>Actions</th>
+                    <th style={styles.th}>Identity</th>
+                    <th style={styles.th}>Permissions</th>
+                    <th style={styles.th}>Method</th>
+                    <th style={styles.th}>Created</th>
+                    <th style={styles.th}>Status</th>
+                    <th style={styles.th}>Operations</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map(u => (
-                    <tr key={u.id}>
-                      <td style={s.td}>
+                    <tr key={u.id} style={{ transition: "background 0.15s" }} onMouseOver={e => e.currentTarget.style.backgroundColor = "#F8FAFC"} onMouseOut={e => e.currentTarget.style.backgroundColor = "transparent"}>
+                      <td style={styles.td}>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <div style={{ 
-                            width: "40px", 
-                            height: "40px", 
-                            borderRadius: "50%", 
-                            background: u.role === "ADMIN" ? NAVY : "#94a3b8",
-                            color: "white",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontWeight: "700"
-                          }}>{u.name[0].toUpperCase()}</div>
-                          <div>
-                            <div style={{ fontWeight: "700", color: "#0f172a" }}>{u.name}</div>
-                            <div style={{ fontSize: "0.8125rem", color: "#64748b" }}>{u.email}</div>
-                          </div>
+                          <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", color: "#0F172A" }}>{u.name[0]}</div>
+                          <div><div style={{ fontWeight: "600", color: "#0F172A" }}>{u.name}</div><div style={{ fontSize: "12px", color: "#64748B" }}>{u.email}</div></div>
                         </div>
                       </td>
-                      <td style={s.td}>
-                        <div style={s.badge(u.role === "ADMIN" ? "#eff6ff" : "#f1f5f9", u.role === "ADMIN" ? NAVY : "#64748b")}>
-                          {u.role}
-                        </div>
+                      <td style={styles.td}>
+                        <span className={`badge ${u.role === 'ADMIN' ? 'badge-approved' : 'badge-muted'}`}>{u.role}</span>
                       </td>
-                      <td style={s.td}>
-                        <div style={s.providerIcon(u.authProvider === "GOOGLE")}>
-                          {u.authProvider === "GOOGLE" ? "G Google" : "Local"}
-                        </div>
+                      <td style={styles.td}>
+                        <span style={{ fontSize: "13px", color: "#64748B" }}>{u.authProvider === 'GOOGLE' ? '🔒 Google SSO' : '📧 Local Auth'}</span>
                       </td>
-                      <td style={s.td}>
-                        <div style={{ fontSize: "0.875rem", color: "#475569" }}>
-                          {new Date(u.createdAt).toLocaleDateString()}
-                        </div>
+                      <td style={styles.td}>
+                        <span style={{ fontSize: "13px", color: "#64748B" }}>{new Date(u.createdAt).toLocaleDateString()}</span>
                       </td>
-                      <td style={s.td}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div style={s.toggle(u.enabled)} onClick={() => handleToggleStatus(u.id, u.enabled)}>
-                            <div style={s.toggleCircle(u.enabled)} />
-                          </div>
-                          <span style={{ fontSize: "0.75rem", fontWeight: "600", color: u.enabled ? "#22c55e" : "#ef4444" }}>
-                            {u.enabled ? "ACTIVE" : "DISABLED"}
-                          </span>
-                        </div>
+                      <td style={styles.td}>
+                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <div style={styles.toggle(u.enabled)} onClick={() => handleToggleStatus(u.id, u.enabled)}><div style={styles.toggleCircle(u.enabled)} /></div>
+                            <span style={{ fontSize: "11px", fontWeight: "700", color: u.enabled ? "#10B981" : "#EF4444" }}>{u.enabled ? "ACTIVE" : "BAN"}</span>
+                         </div>
                       </td>
-                      <td style={s.td}>
+                      <td style={styles.td}>
                         <div style={{ display: "flex", gap: "8px" }}>
-                          <button style={s.actionBtn} onClick={() => openRoleModal(u)}>Change Role</button>
-                          {u.id !== currentUser?.id && (
-                            <button 
-                              style={{ ...s.actionBtn, backgroundColor: "#fef2f2", color: "#ef4444", borderColor: "#fecaca" }} 
-                              onClick={() => handleDeleteUser(u.id)}
-                            >
-                              Delete
-                            </button>
-                          )}
+                           <button className="btn-secondary" style={{ padding: "6px 12px", fontSize: "12px" }} onClick={() => { setSelectedUser(u); setNewRole(u.role); setShowRoleModal(true); }}>Role</button>
+                           {u.id !== currentUser?.id && (
+                             <button onClick={() => handleDeleteUser(u.id)} style={{ padding: "6px", borderRadius: "6px", border: "1px solid #FEE2E2", color: "#EF4444", backgroundColor: "transparent", cursor: "pointer" }}><Trash2 size={14} /></button>
+                           )}
                         </div>
                       </td>
                     </tr>
@@ -335,40 +249,27 @@ const UsersPage = () => {
         </div>
       </main>
 
-      {/* ROLE MODAL */}
       {showRoleModal && (
-        <div style={s.modalOverlay}>
-          <div style={s.modal}>
-            <h2 style={s.modalTitle}>Change User Role</h2>
-            <div style={{ marginBottom: "1.5rem" }}>
-              <div style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "4px" }}>User</div>
-              <div style={{ fontWeight: "700" }}>{selectedUser?.name} ({selectedUser?.email})</div>
-            </div>
-            <div style={s.formGroup}>
-              <label style={s.label}>New Role</label>
-              <select style={s.select} value={newRole} onChange={e => setNewRole(e.target.value)} style={{ width: "100%" }}>
-                <option value="USER">USER</option>
-                <option value="ADMIN">ADMIN</option>
-              </select>
-            </div>
-            <button 
-              style={s.btnPrimary} 
-              onClick={handleRoleUpdate}
-              disabled={actionLoading}
-            >
-              {actionLoading ? "Updating..." : "Save Changes"}
-            </button>
-            <button style={s.btnSecondary} onClick={() => setShowRoleModal(false)} disabled={actionLoading}>Cancel</button>
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalPanel}>
+             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: "700" }}>Update Permissions</h3>
+                <button onClick={() => setShowRoleModal(false)} style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer" }}><X size={20} /></button>
+             </div>
+             <p style={{ fontSize: "14px", color: "#64748B", marginBottom: "24px" }}>Modify role for <span style={{ fontWeight: "700", color: "#0F172A" }}>{selectedUser?.name}</span>. This will affect their administrative access level.</p>
+             <select style={{ ...styles.select, width: "100%", marginBottom: "24px" }} value={newRole} onChange={e => setNewRole(e.target.value)}>
+                <option value="USER">Standard User</option>
+                <option value="ADMIN">System Administrator</option>
+             </select>
+             <div style={{ display: "flex", gap: "12px" }}>
+                <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setShowRoleModal(false)}>Cancel</button>
+                <button className="btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={handleRoleUpdate} disabled={actionLoading}>
+                   {actionLoading ? "Updating..." : "Commit Change"}
+                </button>
+             </div>
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   );
 };

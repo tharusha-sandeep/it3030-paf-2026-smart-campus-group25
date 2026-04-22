@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
 import toast from "react-hot-toast";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Calendar, Clock, Users, FileText } from "lucide-react";
 
-const NAVY = "#1e3a5f";
-
+/**
+ * Redesigned NewBookingModal
+ * - Pro-style clean layout
+ * - Sky blue accents
+ * - Modern inputs and typography
+ */
 const NewBookingModal = ({ onClose, onSuccess, preSelectedResourceId }) => {
   const [resources, setResources] = useState([]);
   const [loadingResources, setLoadingResources] = useState(true);
@@ -22,7 +26,7 @@ const NewBookingModal = ({ onClose, onSuccess, preSelectedResourceId }) => {
   useEffect(() => {
     axiosInstance.get("/api/resources")
       .then(res => setResources(res.data.filter(r => r.status === "ACTIVE")))
-      .catch(() => toast.error("Failed to load resources"))
+      .catch(() => toast.error("Resource fetch failed"))
       .finally(() => setLoadingResources(false));
   }, []);
 
@@ -33,8 +37,8 @@ const NewBookingModal = ({ onClose, onSuccess, preSelectedResourceId }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.resourceId) return toast.error("Please select a resource");
-    if (form.startTime >= form.endTime) return toast.error("End time must be after start time");
+    if (!form.resourceId) return toast.error("Asset selection required");
+    if (form.startTime >= form.endTime) return toast.error("Invalid timeframe selected");
 
     setSubmitting(true);
     try {
@@ -46,95 +50,95 @@ const NewBookingModal = ({ onClose, onSuccess, preSelectedResourceId }) => {
         purpose: form.purpose,
         attendees: Number(form.attendees),
       });
-      toast.success("Booking request submitted!");
+      toast.success("Reservation request queued");
       onSuccess();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to submit booking");
+      toast.error(err.response?.data?.message || "Internal server error");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const s = {
-    overlay: { position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(4px)" },
-    modal: { backgroundColor: "white", borderRadius: "16px", width: "500px", maxWidth: "95vw", boxShadow: "0 20px 40px rgba(0,0,0,0.15)", overflow: "hidden" },
-    header: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", background: `linear-gradient(135deg, ${NAVY} 0%, #122a47 100%)` },
-    title: { fontSize: "1.0625rem", fontWeight: "700", color: "white", margin: 0 },
-    closeBtn: { background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "8px", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", width: "30px", height: "30px" },
-    body: { padding: "1.5rem" },
-    formGroup: { marginBottom: "1.125rem" },
-    label: { display: "block", fontSize: "0.8125rem", fontWeight: "600", color: "#374151", marginBottom: "5px" },
-    input: { width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: "9px", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", color: "#0f172a" },
-    select: { width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: "9px", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", color: "#0f172a", backgroundColor: "white" },
-    textarea: { width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: "9px", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", color: "#0f172a", resize: "vertical", minHeight: "80px" },
-    timeRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" },
-    footer: { display: "flex", gap: "0.75rem", justifyContent: "flex-end", padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", backgroundColor: "#f8fafc" },
-    cancelBtn: { padding: "9px 20px", border: "1.5px solid #e2e8f0", borderRadius: "9px", backgroundColor: "white", color: "#475569", fontSize: "0.875rem", fontWeight: "600", cursor: "pointer" },
-    submitBtn: { padding: "9px 20px", border: "none", borderRadius: "9px", backgroundColor: NAVY, color: "white", fontSize: "0.875rem", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" },
+  const styles = {
+    overlay: { position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(4px)" },
+    modal: { backgroundColor: "white", borderRadius: "16px", width: "520px", maxWidth: "95vw", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", overflow: "hidden", animation: "modalSlideUp 0.3s ease-out" },
+    header: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", borderBottom: "1px solid #F1F5F9" },
+    title: { fontSize: "18px", fontWeight: "700", color: "#0F172A", margin: 0 },
+    
+    body: { padding: "24px" },
+    label: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "6px" },
+    input: { width: "100%", padding: "10px 14px", border: "1px solid #E2E8F0", borderRadius: "8px", fontSize: "14px", outlineColor: "#0EA5E9", color: "#0F172A", transition: "border 0.2s" },
+    textarea: { width: "100%", padding: "10px 14px", border: "1px solid #E2E8F0", borderRadius: "8px", fontSize: "14px", outlineColor: "#0EA5E9", minHeight: "100px", resize: "none" },
+    
+    footer: { display: "flex", gap: "12px", justifyContent: "flex-end", padding: "16px 24px", borderTop: "1px solid #F1F5F9", backgroundColor: "#F8FAFC" },
   };
 
   return (
-    <div style={s.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div style={s.modal}>
-        <div style={s.header}>
-          <p style={s.title}>New Booking Request</p>
-          <button style={s.closeBtn} onClick={onClose}><X size={16} /></button>
+    <div style={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={styles.modal}>
+        <div style={styles.header}>
+          <h2 style={styles.title}>New Reservation</h2>
+          <button style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer" }} onClick={onClose}><X size={20} /></button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div style={s.body}>
-            <div style={s.formGroup}>
-              <label style={s.label}>Resource</label>
+          <div style={styles.body}>
+            <div style={{ marginBottom: "20px" }}>
+              <label style={styles.label}><Calendar size={14} /> Resource Selection</label>
               {loadingResources ? (
-                <p style={{ color: "#94a3b8", fontSize: "0.875rem" }}>Loading resources...</p>
+                <div style={{ padding: "10px", color: "#94A3B8" }}><Loader2 className="animate-spin" size={16} /></div>
               ) : (
-                <select name="resourceId" value={form.resourceId} onChange={handleChange} style={s.select} required>
-                  <option value="">— Select a resource —</option>
+                <select name="resourceId" value={form.resourceId} onChange={handleChange} style={styles.input} required>
+                  <option value="">— Choose an asset —</option>
                   {resources.map(r => (
-                    <option key={r.id} value={r.id}>{r.name} ({r.location || "No location"})</option>
+                    <option key={r.id} value={r.id}>{r.name} @ {r.location || "TBD"}</option>
                   ))}
                 </select>
               )}
             </div>
 
-            <div style={s.formGroup}>
-              <label style={s.label}>Booking Date</label>
-              <input type="date" name="bookingDate" value={form.bookingDate} onChange={handleChange}
-                style={s.input} required min={new Date().toISOString().split("T")[0]} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
+                <div>
+                  <label style={styles.label}><Calendar size={14} /> Date</label>
+                  <input type="date" name="bookingDate" value={form.bookingDate} onChange={handleChange} style={styles.input} required min={new Date().toISOString().split("T")[0]} />
+                </div>
+                <div>
+                  <label style={styles.label}><Users size={14} /> Attendees</label>
+                  <input type="number" name="attendees" value={form.attendees} onChange={handleChange} style={styles.input} min="1" required />
+                </div>
             </div>
 
-            <div style={{ ...s.formGroup, ...s.timeRow }}>
-              <div>
-                <label style={s.label}>Start Time</label>
-                <input type="time" name="startTime" value={form.startTime} onChange={handleChange} style={s.input} required />
-              </div>
-              <div>
-                <label style={s.label}>End Time</label>
-                <input type="time" name="endTime" value={form.endTime} onChange={handleChange} style={s.input} required />
-              </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
+                <div>
+                  <label style={styles.label}><Clock size={14} /> Start Time</label>
+                  <input type="time" name="startTime" value={form.startTime} onChange={handleChange} style={styles.input} required />
+                </div>
+                <div>
+                  <label style={styles.label}><Clock size={14} /> End Time</label>
+                  <input type="time" name="endTime" value={form.endTime} onChange={handleChange} style={styles.input} required />
+                </div>
             </div>
 
-            <div style={s.formGroup}>
-              <label style={s.label}>Purpose</label>
-              <textarea name="purpose" value={form.purpose} onChange={handleChange}
-                style={s.textarea} placeholder="Describe the purpose of this booking..." required />
-            </div>
-
-            <div style={s.formGroup}>
-              <label style={s.label}>Number of Attendees</label>
-              <input type="number" name="attendees" value={form.attendees} onChange={handleChange}
-                style={s.input} min="1" required />
+            <div>
+              <label style={styles.label}><FileText size={14} /> Purpose</label>
+              <textarea name="purpose" value={form.purpose} onChange={handleChange} style={styles.textarea} placeholder="Summary of intended use..." required />
             </div>
           </div>
 
-          <div style={s.footer}>
-            <button type="button" style={s.cancelBtn} onClick={onClose}>Discard</button>
-            <button type="submit" style={s.submitBtn} disabled={submitting}>
-              {submitting ? <><Loader2 size={16} className="animate-spin" /> Submitting...</> : "Submit Request"}
+          <div style={styles.footer}>
+            <button type="button" className="btn-secondary" onClick={onClose}>Discard</button>
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting ? <Loader2 size={18} className="animate-spin" /> : "Commit Schedule"}
             </button>
           </div>
         </form>
       </div>
+      <style>{`
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };

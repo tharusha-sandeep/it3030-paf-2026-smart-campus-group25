@@ -8,31 +8,15 @@ import NewBookingModal from "../components/NewBookingModal";
 import toast from "react-hot-toast";
 import {
   CalendarDays, Plus, Loader2, AlertCircle, RefreshCw,
-  Clock, MapPin, Users, XCircle, CheckCircle, Clock3
+  Clock, MapPin, Users, XCircle, CheckCircle2, Clock3, Filter, Search
 } from "lucide-react";
 
-const NAVY = "#1e3a5f";
-const NAVY_DARK = "#122a47";
-
-// ── Status config ────────────────────────────────────────────────────────────
-const STATUS = {
-  PENDING:   { label: "Pending",   bg: "#fef9c3", color: "#854d0e", icon: Clock3 },
-  APPROVED:  { label: "Approved",  bg: "#dcfce7", color: "#166534", icon: CheckCircle },
-  REJECTED:  { label: "Rejected",  bg: "#fef2f2", color: "#991b1b", icon: XCircle },
-  CANCELLED: { label: "Cancelled", bg: "#f1f5f9", color: "#64748b", icon: XCircle },
-};
-
-const StatusBadge = ({ status }) => {
-  const cfg = STATUS[status] || STATUS.PENDING;
-  const Icon = cfg.icon;
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "4px 10px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "700", backgroundColor: cfg.bg, color: cfg.color }}>
-      <Icon size={12} /> {cfg.label}
-    </span>
-  );
-};
-
-// ── Main Page ────────────────────────────────────────────────────────────────
+/**
+ * Redesigned BookingsPage
+ * - Stripe-style filter bar
+ * - Clean white cards with sky blue accents
+ * - Defined status badges
+ */
 const BookingsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -48,7 +32,7 @@ const BookingsPage = () => {
       const res = await axiosInstance.get("/api/bookings/my");
       setBookings(res.data);
     } catch {
-      setError("Failed to load bookings.");
+      setError("Failed to load reservations data.");
     } finally {
       setLoading(false);
     }
@@ -60,115 +44,130 @@ const BookingsPage = () => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
     try {
       await axiosInstance.put(`/api/bookings/${id}/cancel`);
-      toast.success("Booking cancelled.");
+      toast.success("Booking cancelled successfully.");
       fetchBookings();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to cancel booking.");
+      toast.error(err.response?.data?.message || "Cancellation failed.");
     }
   };
 
-  const s = {
-    root: { display: "flex", minHeight: "100vh", backgroundColor: "#f5f6fa", fontFamily: "'Inter', sans-serif" },
-    main: { marginLeft: "220px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
-    topNav: { backgroundColor: "white", padding: "0 1.5rem", height: "60px", display: "flex", alignItems: "center", justifyContent: "flex-end", borderBottom: "1px solid #f1f5f9", position: "sticky", top: 0, zIndex: 50 },
-    content: { padding: "1.75rem" },
-    pageHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.75rem" },
-    titleWrap: {},
-    pageTitle: { fontSize: "1.625rem", fontWeight: "800", color: "#0f172a", margin: 0 },
-    pageSub: { fontSize: "0.875rem", color: "#64748b", margin: "4px 0 0 0" },
-    newBtn: { display: "flex", alignItems: "center", gap: "8px", padding: "10px 20px", borderRadius: "10px", border: "none", background: `linear-gradient(135deg, ${NAVY}, ${NAVY_DARK})`, color: "white", fontWeight: "600", fontSize: "0.9rem", cursor: "pointer", boxShadow: "0 4px 10px rgba(30,58,95,0.25)" },
+  const styles = {
+    root: { display: "flex", minHeight: "100vh", backgroundColor: "#F8FAFC" },
+    main: { marginLeft: "240px", flex: 1, display: "flex", flexDirection: "column" },
+    header: { height: "64px", backgroundColor: "white", borderBottom: "1px solid #E2E8F0", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "flex-end", position: "sticky", top: 0, zIndex: 50 },
+    content: { padding: "32px", maxWidth: "1200px", margin: "0 auto", width: "100%" },
+    pageHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" },
+    title: { fontSize: "24px", fontWeight: "700", color: "#0F172A" },
+    sub: { fontSize: "14px", color: "#64748B", marginTop: "4px" },
 
-    // Cards grid
-    grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "1.25rem" },
-    card: { backgroundColor: "white", borderRadius: "14px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9", overflow: "hidden" },
-    cardTop: { padding: "1.25rem 1.25rem 1rem", borderBottom: "1px solid #f8fafc" },
-    cardRow: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" },
-    resourceName: { fontSize: "1rem", fontWeight: "700", color: "#0f172a" },
-    meta: { display: "flex", flexDirection: "column", gap: "5px", padding: "1rem 1.25rem" },
-    metaItem: { display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8125rem", color: "#475569" },
-    cardFooter: { padding: "0.75rem 1.25rem", backgroundColor: "#f8fafc", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "8px" },
-    cancelBtn: { padding: "6px 14px", border: "1px solid #fecaca", borderRadius: "8px", backgroundColor: "white", color: "#dc2626", fontSize: "0.8125rem", fontWeight: "600", cursor: "pointer" },
-    rejectionBox: { margin: "0 1.25rem 1rem", padding: "8px 12px", backgroundColor: "#fef2f2", borderRadius: "8px", fontSize: "0.8rem", color: "#991b1b", borderLeft: "3px solid #ef4444" },
+    filterBar: {
+      backgroundColor: "white", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "16px",
+      display: "flex", gap: "16px", marginBottom: "32px", alignItems: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+    },
 
-    // States
-    stateBox: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5rem 2rem", textAlign: "center", color: "#64748b" },
+    grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "24px" },
+    card: {
+      backgroundColor: "white", borderRadius: "12px", border: "1px solid #E2E8F0",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.06)", overflow: "hidden", display: "flex", flexDirection: "column"
+    },
+    cardBody: { padding: "20px" },
+    metaRow: { display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#64748B", marginBottom: "8px" },
+    cardFooter: { 
+      padding: "16px 20px", borderTop: "1px solid #F1F5F9", backgroundColor: "#FAFAFA",
+      display: "flex", justifyContent: "flex-end", gap: "10px"
+    },
+    emptyState: { padding: "80px 20px", textAlign: "center", backgroundColor: "white", borderRadius: "12px", border: "1px dashed #E2E8F0" }
   };
 
-  const renderContent = () => {
-    if (loading) return (
-      <div style={s.stateBox}>
-        <Loader2 size={36} color={NAVY} style={{ animation: "spin 1s linear infinite" }} />
-        <p style={{ marginTop: "1rem" }}>Loading your bookings...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-    if (error) return (
-      <div style={s.stateBox}>
-        <AlertCircle size={40} color="#ef4444" />
-        <p style={{ marginTop: "1rem" }}>{error}</p>
-        <button onClick={fetchBookings} style={{ ...s.newBtn, marginTop: "1rem" }}><RefreshCw size={16} /> Retry</button>
-      </div>
-    );
-    if (bookings.length === 0) return (
-      <div style={s.stateBox}>
-        <CalendarDays size={48} color="#94a3b8" />
-        <p style={{ marginTop: "1rem", fontWeight: "600" }}>No bookings yet</p>
-        <p style={{ fontSize: "0.875rem" }}>Click "New Booking" to reserve a campus resource.</p>
-      </div>
-    );
-
-    return (
-      <div style={s.grid}>
-        {bookings.map(b => (
-          <div key={b.id} style={s.card}>
-            <div style={s.cardTop}>
-              <div style={s.cardRow}>
-                <span style={s.resourceName}>{b.resourceName}</span>
-                <StatusBadge status={b.status} />
-              </div>
-              <p style={{ margin: 0, fontSize: "0.8125rem", color: "#64748b" }}>#{b.id} · {b.purpose}</p>
-            </div>
-
-            <div style={s.meta}>
-              <span style={s.metaItem}><CalendarDays size={14} /> {b.bookingDate}</span>
-              <span style={s.metaItem}><Clock size={14} /> {b.startTime} – {b.endTime}</span>
-              {b.resourceLocation && <span style={s.metaItem}><MapPin size={14} /> {b.resourceLocation}</span>}
-              <span style={s.metaItem}><Users size={14} /> {b.attendees} attendee{b.attendees !== 1 ? "s" : ""}</span>
-            </div>
-
-            {b.status === "REJECTED" && b.rejectionReason && (
-              <div style={s.rejectionBox}>Rejected: {b.rejectionReason}</div>
-            )}
-
-            {(b.status === "PENDING" || b.status === "APPROVED") && (
-              <div style={s.cardFooter}>
-                <button style={s.cancelBtn} onClick={() => handleCancel(b.id)}>Cancel Booking</button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
+  const getStatusBadge = (status) => {
+    const maps = {
+      APPROVED: "badge-approved",
+      PENDING: "badge-pending",
+      REJECTED: "badge-rejected",
+      CANCELLED: "badge-muted"
+    };
+    return `badge ${maps[status] || "badge-pending"}`;
   };
 
   return (
-    <div style={s.root}>
+    <div style={styles.root}>
       <Sidebar activeId="bookings" />
-      <main style={s.main}>
-        <header style={s.topNav}>
+      <main style={styles.main}>
+        <header style={styles.header}>
           <ProfileDropdown />
         </header>
-        <div style={s.content}>
-          <div style={s.pageHeader}>
-            <div style={s.titleWrap}>
-              <h1 style={s.pageTitle}>My Bookings</h1>
-              <p style={s.pageSub}>Track and manage your resource reservations</p>
+        <div style={styles.content}>
+          <div style={styles.pageHeader}>
+            <div>
+              <h1 style={styles.title}>Your Bookings</h1>
+              <p style={styles.sub}>Central hub for all your confirmed and pending reservations.</p>
             </div>
-            <button style={s.newBtn} onClick={() => setShowNewModal(true)}>
-              <Plus size={18} /> New Booking
+            <button className="btn-primary" onClick={() => setShowNewModal(true)}>
+              <Plus size={18} /> New Request
             </button>
           </div>
-          {renderContent()}
+
+          <div style={styles.filterBar}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#F1F5F9", padding: "10px 16px", borderRadius: "8px", flex: 1 }}>
+              <Search size={18} color="#94A3B8" />
+              <input style={{ border: "none", background: "none", outline: "none", fontSize: "14px", width: "100%" }} placeholder="Filter by resource or purpose..." />
+            </div>
+            <button className="btn-secondary" style={{ display: "flex", alignItems: "center", gap: "8px" }}><Filter size={14} /> Filter Status</button>
+          </div>
+
+          {loading ? (
+             <div style={{ textAlign: "center", padding: "100px" }}><Loader2 size={40} className="animate-spin" color="#0EA5E9" /></div>
+          ) : error ? (
+            <div style={styles.emptyState}>
+               <AlertCircle size={40} color="#EF4444" style={{ marginBottom: "16px" }} />
+               <p style={{ fontWeight: "600", color: "#0F172A" }}>{error}</p>
+               <button className="btn-secondary" onClick={fetchBookings} style={{ marginTop: "16px" }}>Retry Connection</button>
+            </div>
+          ) : bookings.length === 0 ? (
+            <div style={styles.emptyState}>
+              <div style={{ fontSize: "40px", marginBottom: "16px" }}>📅</div>
+              <p style={{ fontWeight: "600", color: "#0F172A", marginBottom: "4px" }}>No reservations found</p>
+              <p style={{ color: "#64748B", fontSize: "14px", marginBottom: "20px" }}>You haven't made any resource requests yet.</p>
+              <button className="btn-primary" style={{ margin: "0 auto" }} onClick={() => setShowNewModal(true)}>Start Booking</button>
+            </div>
+          ) : (
+            <div style={styles.grid}>
+              {bookings.map(b => (
+                <div key={b.id} style={styles.card}>
+                  <div style={styles.cardBody}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: "600", color: "#94A3B8" }}>#{b.id}</span>
+                      <span className={getStatusBadge(b.status)}>{b.status.toLowerCase()}</span>
+                    </div>
+                    <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#0F172A", marginBottom: "12px" }}>{b.resourceName}</h3>
+                    <div style={{ marginBottom: "16px", fontSize: "13px", color: "#475569", fontStyle: "italic", lineHeight: 1.4 }}>
+                      "{b.purpose?.length > 80 ? b.purpose.substring(0, 77) + "..." : b.purpose}"
+                    </div>
+                    <div>
+                      <div style={styles.metaRow}><CalendarDays size={14} /> {new Date(b.bookingDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}</div>
+                      <div style={styles.metaRow}><Clock size={14} /> {b.startTime} - {b.endTime}</div>
+                      {b.resourceLocation && <div style={styles.metaRow}><MapPin size={14} /> {b.resourceLocation}</div>}
+                      <div style={styles.metaRow}><Users size={14} /> {b.attendees} pax</div>
+                    </div>
+                  </div>
+
+                  {b.status === "REJECTED" && b.rejectionReason && (
+                    <div style={{ margin: "0 20px 20px", padding: "12px", backgroundColor: "#FEF2F2", borderRadius: "8px", borderLeft: "4px solid #EF4444", fontSize: "12px", color: "#991B1B" }}>
+                       <span style={{ fontWeight: "700" }}>Admin Note:</span> {b.rejectionReason}
+                    </div>
+                  )}
+
+                  {(b.status === "PENDING" || b.status === "APPROVED") && (
+                    <div style={styles.cardFooter}>
+                      <button className="btn-secondary" style={{ padding: "6px 12px", fontSize: "12px", borderColor: "#FEE2E2", color: "#EF4444" }} onClick={() => handleCancel(b.id)}>
+                        Cancel Reservation
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
 

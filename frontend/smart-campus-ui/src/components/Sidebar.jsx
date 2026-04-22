@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import {
   LayoutDashboard,
@@ -7,172 +7,219 @@ import {
   Ticket,
   Users,
   LogOut,
-  ShieldCheck
+  ChevronRight,
+  ShieldCheck,
+  Settings,
+  HelpCircle
 } from "lucide-react";
 
-const NAVY = "#1e3a5f";
-const NAVY_DARK = "#122a47";
-
+/**
+ * Modern Linear-style Sidebar
+ * - Dark Navy Background (#0F172A)
+ * - Muted texts, white active items
+ * - Sky blue left border for active state
+ */
 const Sidebar = ({ activeId }) => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const isAdmin = user?.role === "ADMIN";
+  
+  const isAdmin = user?.role === "ADMIN" || 
+                  user?.role === "ROLE_ADMIN" || 
+                  (user?.roles && user.roles.includes("ROLE_ADMIN"));
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  // Shared items: Dashboard and Resources are visible to everyone
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: isAdmin ? "/admin/dashboard" : "/dashboard" },
-    { id: "resources", label: "Resources", icon: Package, path: "/resources" },
+    { id: "dashboard", label: "Overview", path: isAdmin ? "/admin/dashboard" : "/dashboard", icon: LayoutDashboard },
+    { id: "resources", label: "Resources", path: "/resources", icon: Package },
   ];
 
-  if (!isAdmin) {
-    // Regular users see Bookings (their own) and Tickets
-    navItems.push({ id: "bookings", label: "Bookings", icon: CalendarDays, path: "/bookings" });
-    navItems.push({ id: "tickets",  label: "Tickets",  icon: Ticket, path: "/tickets" });
+  if (isAdmin) {
+    navItems.push({ id: "admin-bookings", label: "Manage Bookings", path: "/admin/bookings", icon: ShieldCheck });
+    navItems.push({ id: "users", label: "Users", path: "/admin/users", icon: Users });
   } else {
-    // Admins see Manage Bookings and Users
-    navItems.push({ id: "admin-bookings", label: "Manage Bookings", icon: CalendarDays, path: "/admin/bookings" });
-    navItems.push({ id: "users", label: "Users", icon: Users, path: "/users" });
+    navItems.push({ id: "bookings", label: "My Bookings", path: "/bookings", icon: CalendarDays });
+    navItems.push({ id: "tickets", label: "Support Tickets", path: "/tickets", icon: Ticket });
   }
 
-  const s = {
-    sidebar: {
-      width: "220px",
-      minWidth: "220px",
-      backgroundColor: "white",
-      borderRight: "1px solid #e2e8f0",
+  const styles = {
+    container: {
+      width: "240px",
+      minWidth: "240px",
+      height: "100vh",
+      backgroundColor: "#0F172A",
+      color: "#94A3B8",
       display: "flex",
       flexDirection: "column",
       position: "fixed",
       top: 0,
       left: 0,
-      height: "100vh",
       zIndex: 100,
+      borderRight: "1px solid #1E293B",
     },
-    sidebarBrand: {
-      padding: "1.25rem 1rem",
-      borderBottom: "1px solid #f1f5f9",
+    logoSection: {
+      padding: "24px",
+      marginBottom: "8px",
+    },
+    logoBox: {
       display: "flex",
       alignItems: "center",
-      gap: "10px",
+      gap: "12px",
     },
-    brandIconBox: {
-      width: "34px",
-      height: "34px",
-      borderRadius: "9px",
-      background: `linear-gradient(135deg, ${NAVY} 0%, ${NAVY_DARK} 100%)`,
+    logoCircle: {
+      width: "32px",
+      height: "32px",
+      borderRadius: "8px",
+      backgroundColor: "#0EA5E9", // Sky blue
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      flexShrink: 0,
+      color: "white",
+      fontWeight: "bold",
     },
-    brandTitle: {
-      fontSize: "0.8rem",
+    logoText: {
+      fontSize: "16px",
       fontWeight: "700",
-      color: "#0f172a",
-      lineHeight: 1.2,
+      color: "#FFFFFF",
+      letterSpacing: "-0.01em",
     },
-    brandSub: {
-      fontSize: "0.625rem",
-      color: "#94a3b8",
+    logoSub: {
+      fontSize: "11px",
+      color: "#64748B",
+      fontWeight: "500",
+      textTransform: "uppercase",
+      letterSpacing: "0.05em",
+      marginTop: "2px",
     },
-    navSection: {
+    navWrapper: {
       flex: 1,
-      padding: "1rem 0.5rem",
+      padding: "0 12px",
       overflowY: "auto",
-      display: "flex",
-      flexDirection: "column",
-      gap: "4px",
     },
-    navItem: (active) => ({
+    groupLabel: {
+      fontSize: "11px",
+      fontWeight: "600",
+      color: "#475569",
+      textTransform: "uppercase",
+      letterSpacing: "0.08em",
+      padding: "24px 12px 10px",
+    },
+    navLink: (isActive) => ({
       display: "flex",
       alignItems: "center",
-      gap: "10px",
-      padding: "9px 12px",
-      borderRadius: "9px",
+      gap: "12px",
+      padding: "10px 12px",
+      borderRadius: "6px",
+      marginBottom: "4px",
+      color: isActive ? "#FFFFFF" : "#94A3B8",
+      backgroundColor: isActive ? "#1E293B" : "transparent",
+      textDecoration: "none",
+      fontSize: "14px",
+      fontWeight: isActive ? "500" : "400",
       cursor: "pointer",
-      backgroundColor: active ? NAVY : "transparent",
-      color: active ? "white" : "#475569",
-      fontSize: "0.875rem",
-      fontWeight: active ? "600" : "500",
-      border: "none",
-      width: "100%",
-      textAlign: "left",
-      transition: "all 0.2s",
+      position: "relative",
+      transition: "all 0.15s ease",
     }),
-    sidebarBottom: {
-      padding: "0.75rem 0.5rem 1.25rem",
-      borderTop: "1px solid #f1f5f9",
+    activeBorder: {
+      position: "absolute",
+      left: 0,
+      top: "20%",
+      bottom: "20%",
+      width: "3px",
+      backgroundColor: "#0EA5E9",
+      borderRadius: "0 4px 4px 0",
+    },
+    bottomSection: {
+      padding: "20px 12px 24px",
+      borderTop: "1px solid #1E293B",
     },
     logoutBtn: {
+      width: "100%",
       display: "flex",
       alignItems: "center",
-      gap: "10px",
-      padding: "9px 12px",
-      borderRadius: "9px",
-      cursor: "pointer",
-      color: "#ef4444",
-      fontSize: "0.875rem",
-      fontWeight: "600",
+      gap: "12px",
+      padding: "10px 12px",
+      borderRadius: "6px",
       border: "none",
-      backgroundColor: "#fef2f2",
-      width: "100%",
+      backgroundColor: "transparent",
+      color: "#94A3B8",
+      fontSize: "14px",
+      cursor: "pointer",
       textAlign: "left",
-      transition: "all 0.2s",
+      transition: "all 0.15s ease",
     },
   };
 
   return (
-    <aside style={s.sidebar}>
-      <div style={s.sidebarBrand}>
-        <div style={s.brandIconBox}>
-          <ShieldCheck size={18} color="white" />
-        </div>
-        <div style={s.brandText}>
-          <div style={s.brandTitle}>Smart Campus Hub</div>
-          <div style={s.brandSub}>Operations Platform</div>
+    <div style={styles.container}>
+      <div style={styles.logoSection}>
+        <div style={styles.logoBox}>
+          <div style={styles.logoCircle}>S</div>
+          <div>
+            <div style={styles.logoText}>Smart Campus</div>
+            <div style={styles.logoSub}>Operations Hub</div>
+          </div>
         </div>
       </div>
 
-      <nav style={s.navSection}>
+      <div style={styles.navWrapper}>
+        <div style={styles.groupLabel}>Main Menu</div>
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active = activeId === item.id;
+          const isActive = activeId === item.id;
           return (
-            <button
-              key={item.id}
-              style={s.navItem(active)}
-              onClick={() => navigate(item.path)}
+            <NavLink 
+              key={item.id} 
+              to={item.path} 
+              style={styles.navLink(isActive)}
               onMouseOver={(e) => {
-                if (!active) e.currentTarget.style.backgroundColor = "#f8fafc";
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = "#1E293B";
+                  e.currentTarget.style.color = "#FFFFFF";
+                }
               }}
               onMouseOut={(e) => {
-                if (!active) e.currentTarget.style.backgroundColor = "transparent";
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#94A3B8";
+                }
               }}
             >
-              <Icon size={18} strokeWidth={active ? 2.25 : 1.75} />
-              {item.label}
-            </button>
+              {isActive && <div style={styles.activeBorder} />}
+              <Icon size={18} />
+              <span>{item.label}</span>
+              {isActive && <ChevronRight size={14} style={{ marginLeft: "auto", opacity: 0.5 }} />}
+            </NavLink>
           );
         })}
-      </nav>
 
-      <div style={s.sidebarBottom}>
+        <div style={styles.groupLabel}>System</div>
+        <NavLink to="/profile" style={styles.navLink(activeId === "profile")}>
+          {activeId === "profile" && <div style={styles.activeBorder} />}
+          <Settings size={18} />
+          <span>Settings</span>
+        </NavLink>
+        <NavLink to="/help" style={styles.navLink(activeId === "help")}>
+          <HelpCircle size={18} />
+          <span>Support</span>
+        </NavLink>
+      </div>
+
+      <div style={styles.bottomSection}>
         <button 
-          style={s.logoutBtn} 
-          onClick={handleLogout}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#fee2e2"}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#fef2f2"}
+          onClick={logout} 
+          style={styles.logoutBtn}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+            e.currentTarget.style.color = "#EF4444";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = "#94A3B8";
+          }}
         >
           <LogOut size={18} />
-          Logout
+          <span>Sign Out</span>
         </button>
       </div>
-    </aside>
+    </div>
   );
 };
 

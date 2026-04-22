@@ -91,7 +91,7 @@ const AppRoutes = () => {
           </AdminRoute>
         }
       />
-      <Route path="/users" element={<AdminRoute><UsersPage /></AdminRoute>} />
+      <Route path="/admin/users" element={<AdminRoute><UsersPage /></AdminRoute>} />
       <Route path="/admin/bookings" element={<AdminRoute><AdminBookingsPage /></AdminRoute>} />
 
       {/* Default Redirects — role-aware */}
