@@ -20,6 +20,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import BookingsPage from "./pages/BookingsPage";
 import AdminBookingsPage from "./pages/AdminBookingsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 /**
  * Redirects authenticated users to their role-specific dashboard,
@@ -80,6 +81,7 @@ const AppRoutes = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/change-password" element={<ChangePasswordPage />} />
         <Route path="/bookings" element={<BookingsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
 
       {/* Admin-only Routes */}

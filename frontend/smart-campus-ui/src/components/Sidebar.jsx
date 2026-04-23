@@ -191,8 +191,8 @@ const Sidebar = ({ activeId }) => {
         })}
 
         <div style={styles.groupLabel}>System</div>
-        <NavLink to="/profile" style={styles.navLink(activeId === "profile")}>
-          {activeId === "profile" && <div style={styles.activeBorder} />}
+        <NavLink to="/settings" style={styles.navLink(activeId === "settings")}>
+          {activeId === "settings" && <div style={styles.activeBorder} />}
           <Settings size={18} />
           <span>Settings</span>
         </NavLink>
