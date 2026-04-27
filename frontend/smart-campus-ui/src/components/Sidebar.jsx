@@ -201,7 +201,7 @@ const Sidebar = ({ activeId }) => {
           <NavLink to="/admin/support" style={styles.navLink(activeId === "admin-support")}>
             {activeId === "admin-support" && <div style={styles.activeBorder} />}
             <Ticket size={18} />
-            <span>Support Tickets</span>
+            <span>Support Inbox</span>
           </NavLink>
         ) : (
           <NavLink to="/support" style={styles.navLink(activeId === "support")}>
