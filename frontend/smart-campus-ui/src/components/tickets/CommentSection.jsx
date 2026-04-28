@@ -1,23 +1,31 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// FILE: src/components/tickets/CommentSection.jsx
+// ═══════════════════════════════════════════════════════════════════════════
 import { useState, useEffect } from "react";
 import { getComments, addComment, editComment, deleteComment } from "../../api/ticketApi";
 import { useAuth } from "../../auth/AuthContext";
+import { Send, Pencil, Trash2, X, Check, MessageSquare } from "lucide-react";
 
-export default function CommentSection({ ticketId }) {
+const CommentSection = ({ ticketId }) => {
   const { user } = useAuth();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    getComments(ticketId).then(setComments);
-  }, [ticketId]);
+  useEffect(() => { getComments(ticketId).then(setComments); }, [ticketId]);
 
   const handleAdd = async () => {
     if (!newComment.trim()) return;
-    const comment = await addComment(ticketId, newComment.trim());
-    setComments([...comments, comment]);
-    setNewComment("");
+    setSubmitting(true);
+    try {
+      const comment = await addComment(ticketId, newComment.trim());
+      setComments([...comments, comment]);
+      setNewComment("");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleEdit = async (id) => {
@@ -32,62 +40,92 @@ export default function CommentSection({ ticketId }) {
     setComments(comments.filter((c) => c.id !== id));
   };
 
+  const s = {
+    card: { backgroundColor: "white", borderRadius: "12px", border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", overflow: "hidden" },
+    cardHeader: { padding: "20px 24px", borderBottom: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: "10px" },
+    comment: { padding: "16px 24px", borderBottom: "1px solid #F8FAFC", display: "flex", gap: "12px" },
+    avatar: { width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#0F172A", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", flexShrink: 0 },
+    textarea: { width: "100%", padding: "10px 14px", border: "1px solid #E2E8F0", borderRadius: "8px", fontSize: "14px", outlineColor: "#0EA5E9", resize: "vertical", minHeight: "70px", boxSizing: "border-box", fontFamily: "inherit" },
+    iconBtn: (danger) => ({ background: "none", border: "none", cursor: "pointer", color: danger ? "#EF4444" : "#94A3B8", padding: "4px", borderRadius: "4px", display: "flex", alignItems: "center" }),
+    newCommentArea: { padding: "16px 24px", display: "flex", gap: "12px", alignItems: "flex-end", backgroundColor: "#FAFAFA" },
+  };
+
   return (
-    <div style={styles.container}>
-      <h2 style={styles.heading}>Comments ({comments.length})</h2>
+    <div style={s.card}>
+      <div style={s.cardHeader}>
+        <MessageSquare size={18} color="#0EA5E9" />
+        <h3 style={{ fontSize: "15px", fontWeight: "600", color: "#0F172A", margin: 0 }}>
+          Comments ({comments.length})
+        </h3>
+      </div>
+
+      {comments.length === 0 && (
+        <div style={{ padding: "32px", textAlign: "center", color: "#94A3B8", fontSize: "14px" }}>
+          No comments yet. Be the first to add one.
+        </div>
+      )}
 
       {comments.map((c) => (
-        <div key={c.id} style={styles.comment}>
-          <div style={styles.commentHeader}>
-            <strong>{c.authorName}</strong>
-            <span style={styles.date}>{new Date(c.createdAt).toLocaleString()}</span>
-          </div>
-          {editingId === c.id ? (
-            <div>
-              <textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} style={styles.textarea} />
-              <div style={styles.actions}>
-                <button onClick={() => handleEdit(c.id)} style={styles.saveBtn}>Save</button>
-                <button onClick={() => setEditingId(null)} style={styles.cancelBtn}>Cancel</button>
+        <div key={c.id} style={s.comment}>
+          <div style={s.avatar}>{c.authorName?.[0]?.toUpperCase() || "U"}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <span style={{ fontSize: "13px", fontWeight: "600", color: "#0F172A" }}>{c.authorName}</span>
+              <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                <span style={{ fontSize: "12px", color: "#94A3B8" }}>{new Date(c.createdAt).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}</span>
+                {c.authorId === user?.id && editingId !== c.id && (
+                  <>
+                    <button style={s.iconBtn(false)} onClick={() => { setEditingId(c.id); setEditContent(c.content); }} title="Edit">
+                      <Pencil size={13} />
+                    </button>
+                    <button style={s.iconBtn(true)} onClick={() => handleDelete(c.id)} title="Delete">
+                      <Trash2 size={13} />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
-          ) : (
-            <p style={styles.content}>{c.content}</p>
-          )}
-          {c.authorId === user?.id && editingId !== c.id && (
-            <div style={styles.actions}>
-              <button onClick={() => { setEditingId(c.id); setEditContent(c.content); }} style={styles.editBtn}>Edit</button>
-              <button onClick={() => handleDelete(c.id)} style={styles.deleteBtn}>Delete</button>
-            </div>
-          )}
+
+            {editingId === c.id ? (
+              <div>
+                <textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} style={s.textarea} />
+                <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                  <button className="btn-primary" style={{ padding: "6px 12px", fontSize: "12px" }} onClick={() => handleEdit(c.id)}>
+                    <Check size={13} /> Save
+                  </button>
+                  <button className="btn-secondary" style={{ padding: "6px 12px", fontSize: "12px" }} onClick={() => setEditingId(null)}>
+                    <X size={13} /> Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p style={{ fontSize: "14px", color: "#374151", lineHeight: 1.6, margin: 0 }}>{c.content}</p>
+            )}
+          </div>
         </div>
       ))}
 
-      <div style={styles.newComment}>
-        <textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment..."
-          style={styles.textarea}
-        />
-        <button onClick={handleAdd} style={styles.addBtn}>Post Comment</button>
+      <div style={s.newCommentArea}>
+        <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#0EA5E9", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", flexShrink: 0 }}>
+          {user?.name?.[0]?.toUpperCase() || "U"}
+        </div>
+        <div style={{ flex: 1 }}>
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment..."
+            style={s.textarea}
+            onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) handleAdd(); }}
+          />
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
+            <button className="btn-primary" onClick={handleAdd} disabled={!newComment.trim() || submitting} style={{ padding: "8px 16px" }}>
+              <Send size={14} /> Post Comment
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
-}
-
-const styles = {
-  container: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "1.5rem" },
-  heading: { fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem" },
-  comment: { borderBottom: "1px solid #f3f4f6", paddingBottom: "1rem", marginBottom: "1rem" },
-  commentHeader: { display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" },
-  date: { fontSize: "0.8rem", color: "#9ca3af" },
-  content: { color: "#374151", margin: 0 },
-  textarea: { width: "100%", padding: "0.5rem", border: "1px solid #d1d5db", borderRadius: 8, fontSize: "0.9rem", boxSizing: "border-box", minHeight: 70 },
-  actions: { display: "flex", gap: "0.5rem", marginTop: "0.4rem" },
-  editBtn: { background: "none", border: "1px solid #d1d5db", borderRadius: 6, padding: "2px 10px", cursor: "pointer", fontSize: "0.8rem" },
-  deleteBtn: { background: "none", border: "1px solid #fca5a5", color: "#dc2626", borderRadius: 6, padding: "2px 10px", cursor: "pointer", fontSize: "0.8rem" },
-  saveBtn: { background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: "0.85rem" },
-  cancelBtn: { background: "none", border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: "0.85rem" },
-  newComment: { display: "flex", flexDirection: "column", gap: "0.5rem" },
-  addBtn: { alignSelf: "flex-end", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, padding: "0.5rem 1.2rem", fontWeight: 600, cursor: "pointer" },
 };
+
+export default CommentSection;
