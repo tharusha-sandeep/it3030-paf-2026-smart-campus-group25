@@ -11,5 +11,6 @@ public record CreateTicketDTO(
     @NotBlank String location,
     @NotNull TicketCategory category,
     @NotNull TicketPriority priority,
-    String contactDetails
+    String contactDetails,
+    Long resourceId        // optional — links to a resource from the catalogue
 ) {}

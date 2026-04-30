@@ -38,6 +38,10 @@ public class Ticket {
     @Column(nullable = false)
     private String location;
 
+    private Long resourceId;
+
+    private String resourceName;
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TicketCategory category;
