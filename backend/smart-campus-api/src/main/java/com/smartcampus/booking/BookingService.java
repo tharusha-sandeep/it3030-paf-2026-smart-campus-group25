@@ -2,6 +2,7 @@ package com.smartcampus.booking;
 
 import java.time.LocalDate;
 import java.util.List;
+import com.smartcampus.notification.NotificationService;
 
 public interface BookingService {
 

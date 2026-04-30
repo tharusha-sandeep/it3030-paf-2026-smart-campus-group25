@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.smartcampus.notification.NotificationService;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -21,13 +22,16 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public BookingServiceImpl(BookingRepository bookingRepository,
                               ResourceRepository resourceRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.resourceRepository = resourceRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -86,29 +90,49 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional
-    public BookingResponseDTO approveBooking(Long bookingId) {
-        Booking booking = getBookingOrThrow(bookingId);
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Only PENDING bookings can be approved");
-        }
-        booking.setStatus(BookingStatus.APPROVED);
-        return mapToDTO(bookingRepository.save(booking));
+@Transactional
+public BookingResponseDTO approveBooking(Long bookingId) {
+    Booking booking = getBookingOrThrow(bookingId);
+    if (booking.getStatus() != BookingStatus.PENDING) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Only PENDING bookings can be approved");
     }
+    booking.setStatus(BookingStatus.APPROVED);
+    BookingResponseDTO result = mapToDTO(bookingRepository.save(booking));
+
+    // ── Notify the user ──
+    notificationService.createNotification(
+        booking.getUser(),
+        "Your booking for \"" + booking.getResource().getName() + "\" on " + booking.getBookingDate() + " has been APPROVED.",
+        "BOOKING_APPROVED",
+        booking.getId().toString()
+    );
+
+    return result;
+}
 
     @Override
-    @Transactional
-    public BookingResponseDTO rejectBooking(Long bookingId, String rejectionReason) {
-        Booking booking = getBookingOrThrow(bookingId);
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Only PENDING bookings can be rejected");
-        }
-        booking.setStatus(BookingStatus.REJECTED);
-        booking.setRejectionReason(rejectionReason);
-        return mapToDTO(bookingRepository.save(booking));
+@Transactional
+public BookingResponseDTO rejectBooking(Long bookingId, String rejectionReason) {
+    Booking booking = getBookingOrThrow(bookingId);
+    if (booking.getStatus() != BookingStatus.PENDING) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Only PENDING bookings can be rejected");
     }
+    booking.setStatus(BookingStatus.REJECTED);
+    booking.setRejectionReason(rejectionReason);
+    BookingResponseDTO result = mapToDTO(bookingRepository.save(booking));
+
+    // ── Notify the user ──
+    notificationService.createNotification(
+        booking.getUser(),
+        "Your booking for \"" + booking.getResource().getName() + "\" on " + booking.getBookingDate() + " has been REJECTED. Reason: " + rejectionReason,
+        "BOOKING_REJECTED",
+        booking.getId().toString()
+    );
+
+    return result;
+}
 
     @Override
     @Transactional
