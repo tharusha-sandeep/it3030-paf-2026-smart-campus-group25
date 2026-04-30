@@ -17,6 +17,8 @@ public record TicketResponseDTO(
     String title,
     String description,
     String location,
+    Long resourceId,
+    String resourceName,
     TicketCategory category,
     TicketPriority priority,
     TicketStatus status,

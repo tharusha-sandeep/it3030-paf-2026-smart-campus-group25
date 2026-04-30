@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createTicket } from "../../api/ticketApi";
+import { createTicket, getResources } from "../../api/ticketApi";
 import Sidebar from "../../components/Sidebar";
 import ProfileDropdown from "../../components/ProfileDropdown";
 import {
   ArrowLeft, Loader2, Upload, X,
-  FileText, MapPin, Tag, AlertTriangle, Phone
+  FileText, MapPin, Tag, AlertTriangle, Phone, Package
 } from "lucide-react";
 
 const CATEGORIES = ["ELECTRICAL", "PLUMBING", "IT_EQUIPMENT", "FURNITURE", "HVAC", "SECURITY", "CLEANING", "OTHER"];
@@ -20,11 +20,16 @@ const CreateTicketPage = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     title: "", description: "", location: "",
-    category: "IT_EQUIPMENT", priority: "MEDIUM", contactDetails: "",
+    category: "IT_EQUIPMENT", priority: "MEDIUM", contactDetails: "", resourceId: "",
   });
+  const [resources, setResources] = useState([]);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    getResources().then(setResources).catch(() => {});
+  }, []);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -130,6 +135,23 @@ const CreateTicketPage = () => {
                 <div>
                   <label style={s.label}><MapPin size={14} /> Location *</label>
                   <input name="location" value={form.location} onChange={handleChange} required style={s.input} placeholder="e.g. Lab 3, Block A, 2nd Floor" />
+                </div>
+
+                <div>
+                  <label style={s.label}><Package size={14} /> Linked Resource (optional)</label>
+                  <select
+                    name="resourceId"
+                    value={form.resourceId}
+                    onChange={(e) => setForm({ ...form, resourceId: e.target.value || "" })}
+                    style={s.select}
+                  >
+                    <option value="">-- Select a resource (optional) --</option>
+                    {resources.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name} — {r.location} ({r.type})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div style={s.row}>

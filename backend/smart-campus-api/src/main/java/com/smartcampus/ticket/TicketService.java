@@ -1,6 +1,7 @@
 package com.smartcampus.ticket;
 
 import com.smartcampus.notification.NotificationService;
+import com.smartcampus.resource.ResourceRepository;
 import com.smartcampus.ticket.dto.CreateTicketDTO;
 import com.smartcampus.ticket.dto.TicketResponseDTO;
 import com.smartcampus.ticket.dto.UpdateTicketDTO;
@@ -26,13 +27,16 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final ResourceRepository resourceRepository;
 
     public TicketService(TicketRepository ticketRepository,
                          UserRepository userRepository,
-                         NotificationService notificationService) {
+                         NotificationService notificationService,
+                         ResourceRepository resourceRepository) {
         this.ticketRepository = ticketRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.resourceRepository = resourceRepository;
     }
 
     public TicketResponseDTO createTicket(CreateTicketDTO dto, List<MultipartFile> files, UUID reporterId) {
@@ -46,6 +50,14 @@ public class TicketService {
             }
         }
 
+        // Resolve resource name if resourceId provided
+        String resourceName = null;
+        if (dto.resourceId() != null) {
+            resourceName = resourceRepository.findById(dto.resourceId())
+                    .map(r -> r.getName())
+                    .orElse(null);
+        }
+
         Ticket ticket = Ticket.builder()
                 .reporter(reporter)
                 .title(dto.title())
@@ -56,6 +68,8 @@ public class TicketService {
                 .contactDetails(dto.contactDetails())
                 .status(TicketStatus.OPEN)
                 .attachmentPaths(String.join(",", savedPaths))
+                .resourceId(dto.resourceId())
+                .resourceName(resourceName)
                 .build();
 
         ticket = ticketRepository.save(ticket);
@@ -76,7 +90,6 @@ public class TicketService {
     public TicketResponseDTO getTicketById(UUID ticketId, UUID requesterId) {
         Ticket ticket = getTicket(ticketId);
         AppUser requester = getUser(requesterId);
-        // Allow if reporter or admin
         if (!ticket.getReporter().getId().equals(requesterId) && requester.getRole() != AppRole.ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
@@ -85,12 +98,8 @@ public class TicketService {
 
     public TicketResponseDTO updateTicketStatus(UUID ticketId, UpdateTicketDTO dto, UUID updaterId) {
         Ticket ticket = getTicket(ticketId);
-        AppUser updater = getUser(updaterId);
 
-        // Only admin can do most status transitions; reporter can cancel
-        if (dto.status() != null) {
-            ticket.setStatus(dto.status());
-        }
+        if (dto.status() != null) ticket.setStatus(dto.status());
         if (dto.resolutionNotes() != null) ticket.setResolutionNotes(dto.resolutionNotes());
         if (dto.rejectionReason() != null) ticket.setRejectionReason(dto.rejectionReason());
         if (dto.assigneeId() != null) {
@@ -100,11 +109,10 @@ public class TicketService {
 
         ticket = ticketRepository.save(ticket);
 
-        // Notify the reporter of status change
         if (dto.status() != null) {
             notificationService.createNotification(
                 ticket.getReporter(),
-                "Ticket #" + ticket.getId().toString().substring(0, 8) + " status updated to " + dto.status(),
+                "Ticket \"" + ticket.getTitle() + "\" status updated to " + dto.status(),
                 "TICKET_STATUS",
                 ticket.getId().toString()
             );
@@ -121,8 +129,6 @@ public class TicketService {
         }
         ticketRepository.delete(ticket);
     }
-
-    // ---- Helpers ----
 
     private String saveFile(MultipartFile file, UUID userId) {
         try {
@@ -157,6 +163,8 @@ public class TicketService {
                 t.getTitle(),
                 t.getDescription(),
                 t.getLocation(),
+                t.getResourceId(),
+                t.getResourceName(),
                 t.getCategory(),
                 t.getPriority(),
                 t.getStatus(),

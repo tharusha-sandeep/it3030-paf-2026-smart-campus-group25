@@ -1,5 +1,10 @@
 import axiosInstance from "./axiosInstance";
 
+export const getResources = async () => {
+  const res = await axiosInstance.get("/api/resources");
+  return res.data;
+};
+
 export const createTicket = async (formData) => {
   const res = await axiosInstance.post("/api/tickets", formData, {
     headers: { "Content-Type": "multipart/form-data" },
