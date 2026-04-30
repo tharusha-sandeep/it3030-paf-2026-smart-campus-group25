@@ -1,172 +1,138 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import { User, LogOut, LockKeyhole } from "lucide-react";
+import {
+  LayoutDashboard, Package, CalendarDays, Ticket,
+  Users, LogOut, ChevronRight, ShieldCheck,
+  Settings, HelpCircle, Bell
+} from "lucide-react";
 
-const NAVY = "#1e3a5f";
-const NAVY_DARK = "#122a47";
-
-const ProfileDropdown = () => {
+const Sidebar = ({ activeId }) => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
 
-  const initials = user?.name ? user.name[0].toUpperCase() : "A";
+  const isAdmin = user?.role === "ADMIN" ||
+                  user?.role === "ROLE_ADMIN" ||
+                  (user?.roles && user.roles.includes("ROLE_ADMIN"));
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const navItems = [
+    { id: "dashboard", label: "Overview", path: isAdmin ? "/admin/dashboard" : "/dashboard", icon: LayoutDashboard },
+    { id: "resources", label: "Resources", path: "/resources", icon: Package },
+  ];
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  if (isAdmin) {
+    navItems.push({ id: "admin-bookings", label: "Manage Bookings", path: "/admin/bookings", icon: ShieldCheck });
+    navItems.push({ id: "admin-tickets", label: "Incident Tickets", path: "/admin/tickets", icon: Ticket });
+    navItems.push({ id: "users", label: "Users", path: "/admin/users", icon: Users });
+  } else {
+    navItems.push({ id: "bookings", label: "My Bookings", path: "/bookings", icon: CalendarDays });
+    navItems.push({ id: "tickets", label: "My Tickets", path: "/tickets", icon: Ticket });
+    navItems.push({ id: "notifications", label: "Notifications", path: "/notifications", icon: Bell });
+  }
 
-  const s = {
+  const styles = {
     container: {
-      position: "relative",
-      display: "inline-block",
+      width: "240px", minWidth: "240px", height: "100vh",
+      backgroundColor: "#0F172A", color: "#94A3B8",
+      display: "flex", flexDirection: "column",
+      position: "fixed", top: 0, left: 0, zIndex: 100,
+      borderRight: "1px solid #1E293B",
     },
-    avatarBtn: {
-      width: "36px",
-      height: "36px",
-      borderRadius: "50%",
-      background: `linear-gradient(135deg, ${NAVY} 0%, ${NAVY_DARK} 100%)`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "white",
-      fontWeight: "700",
-      fontSize: "0.875rem",
-      cursor: "pointer",
-      userSelect: "none",
-      border: "none",
-      outline: "none",
-      padding: 0,
-      boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+    logoSection: { padding: "24px", marginBottom: "8px" },
+    logoBox: { display: "flex", alignItems: "center", gap: "12px" },
+    logoCircle: {
+      width: "32px", height: "32px", borderRadius: "8px",
+      backgroundColor: "#0EA5E9", display: "flex",
+      alignItems: "center", justifyContent: "center",
+      color: "white", fontWeight: "bold",
     },
-    dropdown: {
-      position: "absolute",
-      top: "100%",
-      right: 0,
-      marginTop: "8px",
-      width: "240px",
-      backgroundColor: "white",
-      borderRadius: "12px",
-      boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-      border: "1px solid #f1f5f9",
-      overflow: "hidden",
-      zIndex: 1000,
-      display: isOpen ? "block" : "none",
+    logoText: { fontSize: "16px", fontWeight: "700", color: "#FFFFFF", letterSpacing: "-0.01em" },
+    logoSub: { fontSize: "11px", color: "#64748B", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "2px" },
+    navWrapper: { flex: 1, padding: "0 12px", overflowY: "auto" },
+    groupLabel: {
+      fontSize: "11px", fontWeight: "600", color: "#475569",
+      textTransform: "uppercase", letterSpacing: "0.08em",
+      padding: "24px 12px 10px",
     },
-    header: {
-      padding: "1rem",
-      borderBottom: "1px solid #f1f5f9",
-      backgroundColor: "#f8fafc",
+    navLink: (isActive) => ({
+      display: "flex", alignItems: "center", gap: "12px",
+      padding: "10px 12px", borderRadius: "6px", marginBottom: "4px",
+      color: isActive ? "#FFFFFF" : "#94A3B8",
+      backgroundColor: isActive ? "#1E293B" : "transparent",
+      textDecoration: "none", fontSize: "14px",
+      fontWeight: isActive ? "500" : "400",
+      cursor: "pointer", position: "relative",
+      transition: "all 0.15s ease",
+    }),
+    activeBorder: {
+      position: "absolute", left: 0, top: "20%", bottom: "20%",
+      width: "3px", backgroundColor: "#0EA5E9", borderRadius: "0 4px 4px 0",
     },
-    name: {
-      fontSize: "0.875rem",
-      fontWeight: "600",
-      color: "#0f172a",
-      margin: 0,
-    },
-    email: {
-      fontSize: "0.75rem",
-      color: "#64748b",
-      margin: "2px 0 0",
-      whiteSpace: "nowrap",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-    },
-    menu: {
-      padding: "0.5rem",
-      listStyle: "none",
-      margin: 0,
-    },
-    menuItem: {
-      display: "flex",
-      alignItems: "center",
-      gap: "10px",
-      padding: "10px 12px",
-      width: "100%",
-      backgroundColor: "transparent",
-      border: "none",
-      borderRadius: "8px",
-      cursor: "pointer",
-      fontSize: "0.875rem",
-      color: "#475569",
-      textAlign: "left",
-      transition: "background-color 0.2s",
-    },
-    logoutItem: {
-      color: "#ef4444",
+    bottomSection: { padding: "20px 12px 24px", borderTop: "1px solid #1E293B" },
+    logoutBtn: {
+      width: "100%", display: "flex", alignItems: "center", gap: "12px",
+      padding: "10px 12px", borderRadius: "6px", border: "none",
+      backgroundColor: "transparent", color: "#94A3B8",
+      fontSize: "14px", cursor: "pointer", textAlign: "left",
+      transition: "all 0.15s ease",
     },
   };
 
   return (
-    <div style={s.container} ref={dropdownRef}>
-      <button style={s.avatarBtn} onClick={() => setIsOpen(!isOpen)}>
-        {initials}
-      </button>
-
-      <div style={s.dropdown}>
-        <div style={s.header}>
-          <p style={s.name}>{user?.name || "User"}</p>
-          <p style={s.email}>{user?.email || ""}</p>
+    <div style={styles.container}>
+      <div style={styles.logoSection}>
+        <div style={styles.logoBox}>
+          <div style={styles.logoCircle}>S</div>
+          <div>
+            <div style={styles.logoText}>Smart Campus</div>
+            <div style={styles.logoSub}>Operations Hub</div>
+          </div>
         </div>
-        <ul style={s.menu}>
-          <li>
-            <button
-              style={s.menuItem}
-              onClick={() => {
-                setIsOpen(false);
-                navigate("/profile");
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#f1f5f9")}
-              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-            >
-              <User size={16} /> My Profile
-            </button>
-          </li>
-          
-          {String(user?.authProvider).toUpperCase() === "LOCAL" && (
-            <li>
-              <button
-                style={s.menuItem}
-                onClick={() => {
-                  setIsOpen(false);
-                  navigate("/change-password");
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#f1f5f9")}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-              >
-                <LockKeyhole size={16} /> Change Password
-              </button>
-            </li>
-          )}
+      </div>
 
-          <li>
-            <button
-              style={{ ...s.menuItem, ...s.logoutItem }}
-              onClick={handleLogout}
-              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#fef2f2")}
-              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-            >
-              <LogOut size={16} /> Logout
-            </button>
-          </li>
-        </ul>
+      <div style={styles.navWrapper}>
+        <div style={styles.groupLabel}>Main Menu</div>
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeId === item.id;
+          return (
+            <NavLink key={item.id} to={item.path} style={styles.navLink(isActive)}
+              onMouseOver={(e) => { if (!isActive) { e.currentTarget.style.backgroundColor = "#1E293B"; e.currentTarget.style.color = "#FFFFFF"; } }}
+              onMouseOut={(e) => { if (!isActive) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94A3B8"; } }}>
+              {isActive && <div style={styles.activeBorder} />}
+              <Icon size={18} />
+              <span>{item.label}</span>
+              {isActive && <ChevronRight size={14} style={{ marginLeft: "auto", opacity: 0.5 }} />}
+            </NavLink>
+          );
+        })}
+
+        <div style={styles.groupLabel}>System</div>
+        <NavLink to="/settings" style={styles.navLink(activeId === "settings")}>
+          {activeId === "settings" && <div style={styles.activeBorder} />}
+          <Settings size={18} /><span>Settings</span>
+        </NavLink>
+
+        {isAdmin ? (
+          <NavLink to="/admin/support" style={styles.navLink(activeId === "admin-support")}>
+            {activeId === "admin-support" && <div style={styles.activeBorder} />}
+            <Ticket size={18} /><span>Support Inbox</span>
+          </NavLink>
+        ) : (
+          <NavLink to="/support" style={styles.navLink(activeId === "support")}>
+            {activeId === "support" && <div style={styles.activeBorder} />}
+            <HelpCircle size={18} /><span>Support</span>
+          </NavLink>
+        )}
+      </div>
+
+      <div style={styles.bottomSection}>
+        <button onClick={logout} style={styles.logoutBtn}
+          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)"; e.currentTarget.style.color = "#EF4444"; }}
+          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94A3B8"; }}>
+          <LogOut size={18} /><span>Sign Out</span>
+        </button>
       </div>
     </div>
   );
 };
 
-export default ProfileDropdown;
+export default Sidebar;

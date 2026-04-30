@@ -24,36 +24,25 @@ import SettingsPage from "./pages/SettingsPage";
 import SupportPage from "./pages/SupportPage";
 import AdminSupportPage from "./pages/AdminSupportPage";
 
-/**
- * Redirects authenticated users to their role-specific dashboard,
- * unauthenticated users to /login.
- */
-const DefaultRedirect = () => {
-  const { isAuthenticated, user, loading } = useAuth();
-  
-  if (loading) return <LoadingSpinner />;
-  
-  return <Navigate to={isAuthenticated ? getRoleBasedPath(user) : "/login"} replace />;
-};
+// Module C & D pages
+import TicketListPage from "./pages/tickets/TicketListPage";
+import CreateTicketPage from "./pages/tickets/CreateTicketPage";
+import TicketDetailPage from "./pages/tickets/TicketDetailPage";
+import AdminTicketsPage from "./pages/admin/AdminTicketsPage";
+import NotificationsPage from "./pages/NotificationsPage";
 
 const LoadingSpinner = () => (
-  <div style={{ 
-    display: "flex", 
-    justifyContent: "center", 
-    alignItems: "center", 
-    height: "100vh", 
+  <div style={{
+    display: "flex", justifyContent: "center", alignItems: "center",
+    height: "100vh",
     background: "linear-gradient(135deg, #1a3a6b 0%, #0f2447 50%, #1a3a6b 100%)",
-    flexDirection: "column",
-    gap: "1rem",
-    color: "white",
+    flexDirection: "column", gap: "1rem", color: "white",
     fontFamily: "'Inter', sans-serif"
   }}>
     <div style={{
-      width: "40px",
-      height: "40px",
+      width: "40px", height: "40px",
       border: "3px solid rgba(255,255,255,0.2)",
-      borderTop: "3px solid #60a5fa",
-      borderRadius: "50%",
+      borderTop: "3px solid #60a5fa", borderRadius: "50%",
       animation: "spin 1s linear infinite"
     }} />
     <p style={{ fontSize: "0.875rem", opacity: 0.8, letterSpacing: "0.02em" }}>Verifying Session...</p>
@@ -61,9 +50,14 @@ const LoadingSpinner = () => (
   </div>
 );
 
+const DefaultRedirect = () => {
+  const { isAuthenticated, user, loading } = useAuth();
+  if (loading) return <LoadingSpinner />;
+  return <Navigate to={isAuthenticated ? getRoleBasedPath(user) : "/login"} replace />;
+};
+
 const AppRoutes = () => {
   const { loading } = useAuth();
-
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -75,9 +69,9 @@ const AppRoutes = () => {
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-      {/* Protected Routes — any authenticated user */}
+      {/* Protected Routes */}
       <Route path="/resources" element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />
-      
+
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
@@ -85,22 +79,24 @@ const AppRoutes = () => {
         <Route path="/bookings" element={<BookingsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/support" element={<SupportPage />} />
+
+        {/* Module C — Tickets */}
+        <Route path="/tickets" element={<TicketListPage />} />
+        <Route path="/tickets/create" element={<CreateTicketPage />} />
+        <Route path="/tickets/:id" element={<TicketDetailPage />} />
+
+        {/* Module D — Notifications */}
+        <Route path="/notifications" element={<NotificationsPage />} />
       </Route>
 
       {/* Admin-only Routes */}
-      <Route
-        path="/admin/dashboard"
-        element={
-          <AdminRoute>
-            <AdminDashboardPage />
-          </AdminRoute>
-        }
-      />
+      <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><UsersPage /></AdminRoute>} />
       <Route path="/admin/bookings" element={<AdminRoute><AdminBookingsPage /></AdminRoute>} />
       <Route path="/admin/support" element={<AdminRoute><AdminSupportPage /></AdminRoute>} />
+      <Route path="/admin/tickets" element={<AdminRoute><AdminTicketsPage /></AdminRoute>} />
 
-      {/* Default Redirects — role-aware */}
+      {/* Default Redirects */}
       <Route path="/" element={<DefaultRedirect />} />
       <Route path="*" element={<DefaultRedirect />} />
     </Routes>
@@ -117,4 +113,3 @@ function App() {
 }
 
 export default App;
-
