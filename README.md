@@ -186,15 +186,7 @@ The app will open at **http://localhost:5173**
 
 ---
 
-## Contributing
-
-1. Create a feature branch: `git checkout -b feature/your-feature`
-2. Commit changes: `git commit -m "Add your feature"`
-3. Push to branch: `git push origin feature/your-feature`
-4. Open a Pull Request
-
----
 
 ## License
 
-This project is part of the IT3030 PAF 2026 course at [University Name].
+This project is part of the IT3030 PAF 2026 course at SLIIT.
