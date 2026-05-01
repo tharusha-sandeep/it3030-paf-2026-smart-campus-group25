@@ -32,10 +32,10 @@ public class Ticket {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false, length = 2000)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String location;
 
     private Long resourceId;
@@ -58,9 +58,10 @@ public class Ticket {
     private String contactDetails;
 
     // Up to 3 image attachment paths (stored as comma-separated)
+    @Column(columnDefinition = "TEXT")
     private String attachmentPaths;
 
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String resolutionNotes;
 
     @Column(length = 500)

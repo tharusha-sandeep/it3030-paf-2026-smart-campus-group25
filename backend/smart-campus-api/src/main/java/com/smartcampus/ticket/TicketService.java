@@ -130,18 +130,19 @@ public class TicketService {
         ticketRepository.delete(ticket);
     }
 
-    private String saveFile(MultipartFile file, UUID userId) {
-        try {
-            Path dir = Paths.get(UPLOAD_DIR + userId.toString());
-            Files.createDirectories(dir);
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path dest = dir.resolve(filename);
-            Files.copy(file.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
-            return dest.toString();
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save attachment");
-        }
+   private String saveFile(MultipartFile file, UUID userId) {
+    try {
+        Path dir = Paths.get(UPLOAD_DIR + userId.toString());
+        Files.createDirectories(dir);
+        String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+        Path dest = dir.resolve(filename);
+        Files.copy(file.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
+        // Store as forward-slash relative path for cross-platform URL serving
+        return UPLOAD_DIR + userId.toString() + "/" + filename;
+    } catch (IOException e) {
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save attachment");
     }
+}
 
     private Ticket getTicket(UUID id) {
         return ticketRepository.findById(id)
